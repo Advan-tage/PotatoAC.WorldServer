@@ -2248,16 +2248,16 @@ namespace ACE.Server.Command.Handlers.Processors
                     return;
                 }
 
-                instance.AnglesX = obj.Location.RotationX;
-                instance.AnglesY = obj.Location.RotationY;
-                instance.AnglesZ = obj.Location.RotationZ;
-                instance.AnglesW = obj.Location.RotationW;
+                instance.AnglesX = obj.Location.Rotation.X;
+                instance.AnglesY = obj.Location.Rotation.Y;
+                instance.AnglesZ = obj.Location.Rotation.Z;
+                instance.AnglesW = obj.Location.Rotation.W;
             }
             else
             {
                 // compare current position with home position
                 // the nudge should be performed as an offset from home position
-                if (instance.OriginX != obj.Location.PositionX || instance.OriginY != obj.Location.PositionY || instance.OriginZ != obj.Location.PositionZ)
+                if (instance.OriginX != obj.Location.Pos.X || instance.OriginY != obj.Location.Pos.Y || instance.OriginZ != obj.Location.Pos.Z)
                 {
                     //session.Network.EnqueueSend(new GameMessageSystemChat($"Moving {obj.Name} ({obj.Guid}) to home position: {obj.Location} to {instance.ObjCellId:X8} [{instance.OriginX} {instance.OriginY} {instance.OriginZ}]", ChatMessageType.Broadcast));
 
@@ -2280,7 +2280,7 @@ namespace ACE.Server.Command.Handlers.Processors
 
                 var transit = obj.PhysicsObj.transition(obj.PhysicsObj.Position, newPos, true);
 
-                var errorMsg = $"{obj.Name} ({obj.Guid}) failed to move from {obj.PhysicsObj.Position.ACEPosition()} to {newPos.ACEPosition()}";
+                var errorMsg = $"{obj.Name} ({obj.Guid}) failed to move from {obj.PhysicsObj.Position.ACEPosition(obj.Location)} to {newPos.ACEPosition(obj.Location)}";
 
                 if (transit == null)
                 {
@@ -2300,7 +2300,7 @@ namespace ACE.Server.Command.Handlers.Processors
 
             // update ace location
             var prevLoc = new Position(obj.Location);
-            obj.Location = obj.PhysicsObj.Position.ACEPosition();
+            obj.Location = obj.PhysicsObj.Position.ACEPosition(obj.Location);
 
             if (prevLoc.Landblock != obj.Location.Landblock)
                 LandblockManager.RelocateObjectForPhysics(obj, true);
@@ -2312,9 +2312,9 @@ namespace ACE.Server.Command.Handlers.Processors
 
             // update sql
             instance.ObjCellId = obj.Location.Cell;
-            instance.OriginX = obj.Location.PositionX;
-            instance.OriginY = obj.Location.PositionY;
-            instance.OriginZ = obj.Location.PositionZ;
+            instance.OriginX = obj.Location.Pos.X;
+            instance.OriginY = obj.Location.Pos.Y;
+            instance.OriginZ = obj.Location.Pos.Z;
 
             SyncInstances(session, landblock_id, instances);
         }

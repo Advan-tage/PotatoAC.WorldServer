@@ -51,7 +51,6 @@ namespace ACE.Entity
             Rotation = Quaternion.CreateFromYawPitchRoll(0, 0, (float)Math.Atan2(-dir.X, dir.Y));
         }
 
-        public bool Indoors => landblockId.Indoors;
         /// <summary>
         /// Returns the normalized 2D heading direction
         /// </summary>
@@ -386,7 +385,7 @@ namespace ACE.Entity
 
         public string ToLOCString()
         {
-            return $"0x{LandblockId.Raw:X8} [{PositionX:F6} {PositionY:F6} {PositionZ:F6}] {RotationW:F6} {RotationX:F6} {RotationY:F6} {RotationZ:F6} {Instance}";
+            return $"0x{ObjCellID:X8} [{Pos.X:F6} {Pos.Y:F6} {Pos.Z:F6}] {Rotation.W:F6} {Rotation.X:F6} {Rotation.Y:F6} {Rotation.Z:F6} {Instance}";
         }
 
         public bool Equals(Position p)
