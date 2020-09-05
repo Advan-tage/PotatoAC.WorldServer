@@ -14,6 +14,7 @@ using ACE.Server.Factories;
 using ACE.Server.Managers;
 using ACE.Server.Network.GameMessages.Messages;
 using ACE.Server.Network.GameEvent.Events;
+using ACE.Server.Entity.Mutators;
 
 namespace ACE.Server.WorldObjects
 {
@@ -189,7 +190,7 @@ namespace ACE.Server.WorldObjects
             set { if (!value) RemoveProperty(PropertyBool.CorpseGeneratedRare); else SetProperty(PropertyBool.CorpseGeneratedRare, value); }
         }
 
-        public bool IsOnNoDropLandblock => Location != null ? NoDrop_Landblocks.Contains(Location.LandblockId.Landblock) : false;
+        public bool IsOnNoDropLandblock => Location != null ? NoDrop_Landblocks.Contains(Location.Landblock) : false;
 
         public override bool EnterWorld()
         {

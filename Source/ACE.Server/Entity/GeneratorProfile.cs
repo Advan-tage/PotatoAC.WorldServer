@@ -11,6 +11,7 @@ using ACE.Entity.Models;
 using ACE.Server.Factories;
 using ACE.Server.Physics.Common;
 using ACE.Server.WorldObjects;
+using ACE.Server.Entity.Mutators;
 
 namespace ACE.Server.Entity
 {
@@ -317,7 +318,7 @@ namespace ACE.Server.Entity
 
             // offset from generator location
             else
-                obj.Location = new ACE.Entity.Position(Generator.Location.Cell, Generator.Location.PositionX + Biota.OriginX ?? 0, Generator.Location.PositionY + Biota.OriginY ?? 0, Generator.Location.PositionZ + Biota.OriginZ ?? 0, Biota.AnglesX ?? 0, Biota.AnglesY ?? 0, Biota.AnglesZ ?? 0, Biota.AnglesW ?? 0);
+                obj.Location = new ACE.Entity.Position(Generator.Location.ObjCellID, Generator.Location.Pos.X + Biota.OriginX ?? 0, Generator.Location.Pos.Y + Biota.OriginY ?? 0, Generator.Location.Pos.Z + Biota.OriginZ ?? 0, Biota.AnglesX ?? 0, Biota.AnglesY ?? 0, Biota.AnglesZ ?? 0, Biota.AnglesW ?? 0);
 
             if (!VerifyLandblock(obj) || !VerifyWalkableSlope(obj))
                 return false;
@@ -329,7 +330,7 @@ namespace ACE.Server.Entity
         {
             float genRadius = (float)(Generator.GetProperty(PropertyFloat.GeneratorRadius) ?? 0f);
             obj.Location = new ACE.Entity.Position(Generator.Location);
-            obj.Location.PositionZ += 0.05f;
+            obj.Location._pos.Z += 0.05f;
 
             // we are going to delay this scatter logic until the physics engine,
             // where the remnants of this function are in the client (SetScatterPositionInternal)
@@ -338,6 +339,13 @@ namespace ACE.Server.Entity
             // if InitialPlacement fails, then we retry up to maxTries
 
             obj.ScatterPos = new SetPosition(new Physics.Common.Position(obj.Location), SetPositionFlags.RandomScatter, genRadius);
+
+            if (obj is Creature creature && !(obj is Player))
+            {
+                var mutators = obj.GetMutatorsForLocation().GetAll<MobMutators.MobSpawnMutator>();
+                foreach (var mutator in mutators)
+                    mutator.OnSpawn(creature);
+            }
 
             var success = obj.EnterWorld();
 
@@ -375,6 +383,13 @@ namespace ACE.Server.Entity
             //log.Debug($"{_generator.Name}.Spawn_Default({obj.Name}): default handler for RegenLocationType {RegenLocationType}");
 
             obj.Location = new ACE.Entity.Position(Generator.Location);
+
+            if (obj is Creature creature && !(obj is Player))
+            {
+                var mutators = obj.GetMutatorsForLocation().GetAll<MobMutators.MobSpawnMutator>();
+                foreach (var mutator in mutators)
+                    mutator.OnSpawn(creature);
+            }
 
             return obj.EnterWorld();
         }

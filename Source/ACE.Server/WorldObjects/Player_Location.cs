@@ -22,6 +22,7 @@ namespace ACE.Server.WorldObjects
     partial class Player
     {
         private static readonly Position MarketplaceDrop = DatabaseManager.World.GetCachedWeenie("portalmarketplace").GetPosition(PositionType.Destination);
+        public bool DebugLoc { get; set; }
 
         /// <summary>
         /// Teleports the player to position
@@ -597,8 +598,7 @@ namespace ACE.Server.WorldObjects
         public void Teleport(Position _newPosition)
         {
             var newPosition = new Position(_newPosition);
-            //newPosition.PositionZ += 0.005f;
-            newPosition.PositionZ += 0.005f * (ObjScale ?? 1.0f);
+            newPosition._pos.Z += 0.005f * (ObjScale ?? 1.0f);
 
             //Console.WriteLine($"{Name}.Teleport() - Sending to {newPosition.ToLOCString()}");
 

@@ -8,6 +8,7 @@ using ACE.Entity.Enum.Properties;
 using ACE.Entity.Models;
 using ACE.Server.Entity;
 using ACE.Server.Entity.Actions;
+using ACE.Server.Entity.Mutators;
 using ACE.Server.Managers;
 using ACE.Server.Network.GameEvent.Events;
 using ACE.Server.Network.GameMessages.Messages;
@@ -366,6 +367,17 @@ namespace ACE.Server.WorldObjects
                 return null;
             }
 
+            var spellProjectileLBMultiplier = MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.SpellProjectileMultMod, float>(sourcePlayer, PlayerMutatorBuffType.Buff) ?? 1;
+            spellProjectileLBMultiplier *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.SpellProjectileMultMod, float>(sourcePlayer, PlayerMutatorBuffType.Debuff) ?? 1;
+
+            int spellProjectileMinDamageMod = 0;
+            spellProjectileMinDamageMod += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.SpellMinimumDamageAddedMod, int>(sourcePlayer, PlayerMutatorBuffType.Buff) ?? 0;
+            spellProjectileMinDamageMod += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.SpellMinimumDamageAddedMod, int>(sourcePlayer, PlayerMutatorBuffType.Debuff) ?? 0;
+
+            int spellProjectileMaxDamageMod = 0;
+            spellProjectileMaxDamageMod += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.SpellMaximumDamageAddedMod, int>(sourcePlayer, PlayerMutatorBuffType.Buff) ?? 0;
+            spellProjectileMaxDamageMod += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.SpellMaximumDamageAddedMod, int>(sourcePlayer, PlayerMutatorBuffType.Debuff) ?? 0;
+
             var critDamageBonus = 0.0f;
             var weaponCritDamageMod = 1.0f;
             var weaponResistanceMod = 1.0f;
@@ -423,6 +435,9 @@ namespace ACE.Server.WorldObjects
             // Possible 2x + damage bonus for the slayer property
             var slayerMod = GetWeaponCreatureSlayerModifier(sourceCreature, target);
 
+
+            float LBDamageMult = 1f;
+
             // life magic projectiles: ie., martyr's hecatomb
             if (Spell.MetaSpellType == ACE.Entity.Enum.SpellType.LifeProjectile)
             {
@@ -440,6 +455,12 @@ namespace ACE.Server.WorldObjects
                 if (criticalHit)
                 {
                     weaponCritDamageMod = GetWeaponCritDamageMod(sourceCreature, attackSkill, target);
+
+                    //Get crit damage bonus from Landblock
+                    var cdrMutators = MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritDamageRatingMod, float>(sourceCreature as Player, PlayerMutatorBuffType.Buff) ?? 0f;
+                    cdrMutators += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritDamageRatingMod, float>(sourceCreature as Player, PlayerMutatorBuffType.Debuff) ?? 0f;
+                    weaponCritDamageMod += cdrMutators;
+
                     critDamageBonus = lifeMagicDamage * 0.5f * weaponCritDamageMod;
                 }
 
@@ -450,13 +471,25 @@ namespace ACE.Server.WorldObjects
 
                 resistanceMod = (float)Math.Max(0.0f, target.GetResistanceMod(resistanceType, this, null, weaponResistanceMod));
 
-                finalDamage = (lifeMagicDamage + critDamageBonus) * elementalDamageMod * slayerMod * resistanceMod * absorbMod;
+                LBDamageMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.GlobalDamageDealtMod, float>(sourceCreature as Player, PlayerMutatorBuffType.Buff) ?? 1f;
+                LBDamageMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.GlobalDamageDealtMod, float>(sourceCreature as Player, PlayerMutatorBuffType.Debuff) ?? 1f;
+
+                finalDamage = (lifeMagicDamage + critDamageBonus) * elementalDamageMod * slayerMod * resistanceMod * absorbMod * spellProjectileLBMultiplier * LBDamageMult;
             }
             // war/void magic projectiles
             else
             {
                 var minDamage = Spell.MinDamage;
                 var maxDamage = Spell.MaxDamage;
+
+                minDamage += spellProjectileMinDamageMod;
+                maxDamage += spellProjectileMaxDamageMod;
+                if (minDamage < 0)
+                    minDamage = 0;
+                if (maxDamage < 0)
+                    maxDamage = 0;
+                if (minDamage > maxDamage)
+                    minDamage = maxDamage;
 
                 if (isPVP)
                 {
@@ -513,6 +546,8 @@ namespace ACE.Server.WorldObjects
                         critDamageBonus = maxDamage * 0.5f;
 
                     weaponCritDamageMod = GetWeaponCritDamageMod(sourceCreature, attackSkill, target);
+                    weaponCritDamageMod +=  MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritDamageRatingMod, float>(sourceCreature as Player, PlayerMutatorBuffType.Buff) ?? 0f;
+                    weaponCritDamageMod += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritDamageRatingMod, float>(sourceCreature as Player, PlayerMutatorBuffType.Debuff) ?? 0f;
 
                     critDamageBonus *= weaponCritDamageMod;
                 }
@@ -545,9 +580,12 @@ namespace ACE.Server.WorldObjects
 
                 resistanceMod = (float)Math.Max(0.0f, target.GetResistanceMod(resistanceType, this, null, weaponResistanceMod));
 
+                LBDamageMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.GlobalDamageDealtMod, float>(sourceCreature as Player, PlayerMutatorBuffType.Buff) ?? 1f;
+                LBDamageMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.GlobalDamageDealtMod, float>(sourceCreature as Player, PlayerMutatorBuffType.Debuff) ?? 1f;
+
                 finalDamage = baseDamage + critDamageBonus + skillBonus;
 
-                finalDamage *= elementalDamageMod * slayerMod * resistanceMod * absorbMod;
+                finalDamage *= elementalDamageMod * slayerMod * resistanceMod * absorbMod * spellProjectileLBMultiplier * LBDamageMult;
             }
 
             // show debug info

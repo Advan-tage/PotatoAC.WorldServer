@@ -10,6 +10,7 @@ using ACE.Entity.Models;
 using ACE.Server.Managers;
 using ACE.Server.Network.GameMessages.Messages;
 using ACE.Server.WorldObjects;
+using ACE.Server.Entity.Mutators;
 
 namespace ACE.Server.Entity
 {
@@ -223,10 +224,26 @@ namespace ACE.Server.Entity
             HeritageMod = attacker.GetHeritageBonus(Weapon) ? 1.05f : 1.0f;
             PkDamageRating = attacker.GetPKDamageRating();
            
-            DamageRatingMod = Creature.AdditiveCombine(DamageRatingBaseMod, RecklessnessMod, SneakAttackMod, HeritageMod);            
+            DamageRatingMod = Creature.AdditiveCombine(DamageRatingBaseMod, RecklessnessMod, SneakAttackMod, HeritageMod);
+
+            float LBDmgMult = 1f;
+            if (Weapon == null || Weapon.WeenieType != WeenieType.MissileLauncher)
+            {
+                LBDmgMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.PlayerMeleeDamageMultiplier, float>(playerAttacker, PlayerMutatorBuffType.Buff) ?? 1f;
+                LBDmgMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.PlayerMeleeDamageMultiplier, float>(playerAttacker, PlayerMutatorBuffType.Debuff) ?? 1f;
+            }
+
+            if (Weapon?.WeenieType == WeenieType.MissileLauncher)
+            {
+                LBDmgMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.ArcherDamageMultMod, float>(playerAttacker, PlayerMutatorBuffType.Buff) ?? 1f;
+                LBDmgMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.ArcherDamageMultMod, float>(playerAttacker, PlayerMutatorBuffType.Debuff) ?? 1f;
+            }
+
+            LBDmgMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.GlobalDamageDealtMod, float>(playerAttacker, PlayerMutatorBuffType.Buff) ?? 1f;
+            LBDmgMult *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.GlobalDamageDealtMod, float>(playerAttacker, PlayerMutatorBuffType.Debuff) ?? 1f;
 
             // damage before mitigation
-            DamageBeforeMitigation = BaseDamage * AttributeMod * PowerMod * SlayerMod * DamageRatingMod;
+            DamageBeforeMitigation = BaseDamage * AttributeMod * PowerMod * SlayerMod * DamageRatingMod * LBDmgMult;
 
             float pvpBalanceMulti = 1f;
             if (playerAttacker != null && playerDefender != null && Weapon?.WeaponSkill == Skill.MissileWeapons)
@@ -271,6 +288,9 @@ namespace ACE.Server.Entity
             var armorCleavingMod = attacker.GetArmorCleavingMod(Weapon);
 
             var ignoreArmorMod = Math.Min(armorRendingMod, armorCleavingMod);
+
+            ignoreArmorMod *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.ArmorMod, float>(playerDefender as Player, PlayerMutatorBuffType.Buff) ?? 0f;
+            ignoreArmorMod *= MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.ArmorMod, float>(playerDefender as Player, PlayerMutatorBuffType.Debuff) ?? 0f;
 
             // get body part / armor pieces / armor modifier
             if (playerDefender != null)
@@ -329,14 +349,15 @@ namespace ACE.Server.Entity
 
             // calculate final output damage
 
-            Damage = DamageBeforeMitigation * ArmorMod * ShieldMod * ResistanceMod * DamageResistanceRatingMod;            
+            Damage = DamageBeforeMitigation * ArmorMod * ShieldMod * ResistanceMod * DamageResistanceRatingMod;
 
             DamageMitigated = DamageBeforeMitigation - Damage;
 
             // elites hit for double dmg
             if (attacker.IsElite)
                 Damage *= 2;
-            
+
+
             return Damage;
         }
 
@@ -391,6 +412,20 @@ namespace ACE.Server.Entity
 
             // TODO: combat maneuvers for player?
             BaseDamageMod = attacker.GetBaseDamageMod(DamageSource);
+
+            //Melee damage landblock mutator
+            if (Weapon == null || Weapon.WeenieType != WeenieType.MissileLauncher)
+            {
+                BaseDamageMod.DamageBonus += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.MeleeDamageAddedMod, int>(attacker, PlayerMutatorBuffType.Buff) ?? 0;
+                BaseDamageMod.DamageBonus += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.MeleeDamageAddedMod, int>(attacker, PlayerMutatorBuffType.Debuff) ?? 0;
+            }
+
+            //Missile damage landblock mutator
+            if (Weapon?.WeenieType == WeenieType.MissileLauncher)
+            {
+                BaseDamageMod.DamageBonus += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.ArcherAddedDamageMod, int>(attacker, PlayerMutatorBuffType.Buff) ?? 0;
+                BaseDamageMod.DamageBonus += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.ArcherAddedDamageMod, int>(attacker, PlayerMutatorBuffType.Debuff) ?? 0;
+            }
 
             // some quest bows can have built-in damage bonus
             if (Weapon?.WeenieType == WeenieType.MissileLauncher)

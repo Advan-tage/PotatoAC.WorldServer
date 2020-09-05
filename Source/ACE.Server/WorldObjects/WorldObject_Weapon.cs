@@ -1,9 +1,10 @@
 using System;
-
+using System.Runtime.CompilerServices;
 using ACE.Common;
 using ACE.Entity.Enum;
 using ACE.Entity.Enum.Properties;
 using ACE.Server.Entity;
+using ACE.Server.Entity.Mutators;
 using ACE.Server.Managers;
 using ACE.Server.Network.GameMessages.Messages;
 using ACE.Server.WorldObjects.Entity;
@@ -266,9 +267,13 @@ namespace ACE.Server.WorldObjects
             if (wielder != null)
                 critRate += wielder.GetCritRating() * 0.01f;
 
+            critRate += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritRatingMod, float>(wielder as Player, PlayerMutatorBuffType.Buff) ?? 0f;
+            critRate += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritRatingMod, float>(wielder as Player, PlayerMutatorBuffType.Debuff) ?? 0f;
+
             // mitigation
             var critResistRatingMod = Creature.GetNegativeRatingMod(target.GetCritResistRating());
             critRate *= critResistRatingMod;
+
 
             return critRate;
         }
@@ -303,6 +308,9 @@ namespace ACE.Server.WorldObjects
 
             critRate += wielder.GetCritRating() * 0.01f;
 
+            critRate += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritRatingMod, float>(wielder as Player, PlayerMutatorBuffType.Buff) ?? 0f;
+            critRate += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritRatingMod, float>(wielder as Player, PlayerMutatorBuffType.Debuff) ?? 0f;
+
             // mitigation
             var critResistRatingMod = Creature.GetNegativeRatingMod(target.GetCritResistRating());
             critRate *= critResistRatingMod;
@@ -330,6 +338,9 @@ namespace ACE.Server.WorldObjects
 
             if (wielder != null)
                 critDamageMod += wielder.GetCritDamageRating() * 0.01f;
+
+            critDamageMod += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritDamageRatingMod, float>(wielder as Player, PlayerMutatorBuffType.Buff) ?? 0f;
+            critDamageMod += MutatorsForLandblock.GetAggregatedMutatorForPlayer<PlayerMutators.CritDamageRatingMod, float>(wielder as Player, PlayerMutatorBuffType.Debuff) ?? 0f;
 
             // mitigation
             var critDamageResistRatingMod = Creature.GetNegativeRatingMod(target.GetCritDamageResistRating());
@@ -383,6 +394,7 @@ namespace ACE.Server.WorldObjects
                 if (elementalDamageType != DamageType.Undef && elementalDamageType == damageType)
                     return weapon.ElementalDamageBonus.Value;
             }
+
             return 0;
         }
 

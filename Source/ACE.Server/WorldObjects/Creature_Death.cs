@@ -10,6 +10,7 @@ using ACE.Entity.Enum.Properties;
 using ACE.Entity.Models;
 using ACE.Server.Entity;
 using ACE.Server.Entity.Actions;
+using ACE.Server.Entity.Mutators;
 using ACE.Server.Factories;
 using ACE.Server.Managers;
 using ACE.Server.Network.GameEvent.Events;
@@ -512,7 +513,12 @@ namespace ACE.Server.WorldObjects
 
                 var damagePercent = totalDamage / totalHealth;
 
-                var totalXP = (XpOverride ?? 0) * damagePercent;
+                var xpMutators = MutatorsForLandblock.GetForPlayer<PlayerMutators.XPMod>(playerDamager as Player);
+                float xpmutatormod = 1f;
+                foreach (var mutator in xpMutators)
+                    xpmutatormod *= mutator.Multiplier;
+
+                var totalXP = (XpOverride ?? 0) * damagePercent * xpmutatormod;
 
                 playerDamager.EarnXP((long)Math.Round(totalXP), XpType.Kill);
 
@@ -715,7 +721,7 @@ namespace ACE.Server.WorldObjects
 
             // use the physics location for accuracy,
             // especially while jumping
-            corpse.Location = PhysicsObj.Position.ACEPosition();
+            corpse.Location = PhysicsObj.Position.ACEPosition(Location);
 
             corpse.VictimId = Guid.Full;
             corpse.Name = $"{prefix} of {Name}";
@@ -755,7 +761,7 @@ namespace ACE.Server.WorldObjects
                 if (dropped.Count > 0)
                     saveCorpse = true;
 
-                if ((player.Location.Cell & 0xFFFF) < 0x100)
+                if (!player.Location.Indoors)
                 {
                     player.SetPosition(PositionType.LastOutsideDeath, new Position(corpse.Location));
                     player.Session.Network.EnqueueSend(new GameMessagePrivateUpdatePosition(player, PositionType.LastOutsideDeath, corpse.Location));
