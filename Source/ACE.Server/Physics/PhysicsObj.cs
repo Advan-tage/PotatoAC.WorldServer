@@ -99,7 +99,7 @@ namespace ACE.Server.Physics
 
         // server
         public Position RequestPos { get; set; }
-        public byte RequestInstance { get; set; }
+        public uint RequestInstance { get; set; }
 
         public string Name
         {
@@ -228,7 +228,7 @@ namespace ACE.Server.Physics
             }
         }
 
-        public ObjCell AdjustPosition(Position position, Vector3 low_pt, bool dontCreateCells, bool searchCells, byte instance)
+        public ObjCell AdjustPosition(Position position, Vector3 low_pt, bool dontCreateCells, bool searchCells, uint instance)
         {
             var cellID = position.ObjCellID & 0xFFFF;
 
@@ -2389,7 +2389,7 @@ namespace ACE.Server.Physics
 
         public bool entering_world;
 
-        public bool enter_world(Position pos, byte instance)
+        public bool enter_world(Position pos, uint instance)
         {
             entering_world = true;
 
@@ -2401,7 +2401,7 @@ namespace ACE.Server.Physics
             return result;
         }
 
-        public bool enter_world(bool slide, byte instance)
+        public bool enter_world(bool slide, uint instance)
         {
             if (Parent != null) return false;
 
@@ -3445,7 +3445,7 @@ namespace ACE.Server.Physics
             return (TransientState & TransientStateFlags.Active) != 0;
         }
 
-        public void set_current_pos(Position newPos, byte instance)
+        public void set_current_pos(Position newPos, uint instance)
         {
             Position.ObjCellID = newPos.ObjCellID;
             Position.Frame = new AFrame(newPos.Frame);
@@ -3864,7 +3864,7 @@ namespace ACE.Server.Physics
         /// Sets the requested position to the AutonomousPosition
         /// received from the client
         /// </summary>
-        public void set_request_pos(Vector3 pos, Quaternion rotation, byte instance, ObjCell cell, uint blockCellID)
+        public void set_request_pos(Vector3 pos, Quaternion rotation, uint instance, ObjCell cell, uint blockCellID)
         {
             RequestPos.Frame.Origin = pos;
             RequestPos.Frame.Orientation = rotation;
