@@ -8,7 +8,7 @@ namespace ACE.Database.Models.World
         public uint Id { get; set; }
         public uint ObjectId { get; set; }
         public ushort PositionType { get; set; }
-        public byte? Instance { get; set; }
+        public uint? Instance { get; set; }
         public uint ObjCellId { get; set; }
         public float OriginX { get; set; }
         public float OriginY { get; set; }
@@ -18,6 +18,6 @@ namespace ACE.Database.Models.World
         public float AnglesY { get; set; }
         public float AnglesZ { get; set; }
 
-        public Weenie Object { get; set; }
+        public virtual Weenie Object { get; set; }
     }
 }

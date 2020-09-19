@@ -651,8 +651,8 @@ namespace ACE.Entity.Enum.Properties
         PkModeStoredPkDmgRating                 = 9084,
         [ServerOnly]
         PkModeStoredPkDmgRedRating              = 9085,
-
-
+        [ServerOnly]
+        HomeRealm                               = 9086
     }
 
     public static class PropertyIntExtensions

@@ -25,6 +25,7 @@ using ACE.Server.Network;
 using ACE.Server.Network.GameMessages.Messages;
 using ACE.Server.Physics.Extensions;
 using ACE.Server.WorldObjects;
+using ACE.Database.Models.Shard;
 
 namespace ACE.Server.Command.Handlers.Processors
 {
@@ -39,6 +40,7 @@ namespace ACE.Server.Command.Handlers.Processors
             Recipe,
             Spell,
             Weenie,
+            Realm
         }
 
         public static FileType GetContentType(string[] parameters, ref string param)
@@ -59,6 +61,8 @@ namespace ACE.Server.Command.Handlers.Processors
                     return FileType.Recipe;
                 else if (fileType.StartsWith("weenie"))
                     return FileType.Weenie;
+                else if (fileType.StartsWith("realm"))
+                    return FileType.Realm;
             }
             return FileType.Undefined;
         }
@@ -96,6 +100,10 @@ namespace ACE.Server.Command.Handlers.Processors
                 case FileType.Weenie:
                     ImportJsonWeenie(session, param);
                     break;
+
+                case FileType.Realm:
+                    CommandHandlerHelper.WriteOutputInfo(session, $"Realm content type not supported for JSON");
+                    return;
             }
         }
 
@@ -244,6 +252,10 @@ namespace ACE.Server.Command.Handlers.Processors
                 case FileType.Weenie:
                     ImportSQLWeenieWrapped(session, param, parameters.Length >= 3 ? parameters[2] : "");
                     break;
+
+                case FileType.Realm:
+                    ImportSQLRealm(session, param);
+                    break;
             }
         }
 
@@ -275,6 +287,34 @@ namespace ACE.Server.Command.Handlers.Processors
 
             foreach (var file in files)
                 ImportSQLRecipe(session, sql_folder, file.Name);
+        }
+
+        public static void ImportSQLRealm(Session session, string realmId)
+        {
+            DirectoryInfo di = VerifyContentFolder(session);
+            if (!di.Exists) return;
+
+            var sep = Path.DirectorySeparatorChar;
+
+            var sql_folder = $"{di.FullName}{sep}sql{sep}realms{sep}";
+
+            var prefix = realmId + " ";
+
+            if (realmId.Equals("all", StringComparison.OrdinalIgnoreCase))
+                prefix = "";
+
+            di = new DirectoryInfo(sql_folder);
+
+            var files = di.Exists ? di.GetFiles($"{prefix}*.sql") : null;
+
+            if (files == null || files.Length == 0)
+            {
+                CommandHandlerHelper.WriteOutputInfo(session, $"Couldn't find {sql_folder}{prefix}*.sql");
+                return;
+            }
+
+            foreach (var file in files)
+                ImportSQLRealm(session, sql_folder, file.Name);
         }
 
         public static void ImportSQLLandblock(Session session, string landblockId)
@@ -524,6 +564,7 @@ namespace ACE.Server.Command.Handlers.Processors
 
         public static CookBookSQLWriter CookBookSQLWriter;
         public static RecipeSQLWriter RecipeSQLWriter;
+        public static RealmSQLWriter RealmSQLWriter;
 
         public static string json2sql_recipe(Session session, string folder, string json_filename)
         {
@@ -822,6 +863,28 @@ namespace ACE.Server.Command.Handlers.Processors
             sql2json_recipe(session, cookbooks, sql_folder, sql_file);
         }
 
+        private static void ImportSQLRealm(Session session, string sql_folder, string sql_file)
+        {
+            if (!uint.TryParse(Regex.Match(sql_file, @"\d+").Value, out var realmId))
+            {
+                CommandHandlerHelper.WriteOutputInfo(session, $"Couldn't find realm id from {sql_file}");
+                return;
+            }
+
+            ImportSQL(sql_folder + sql_file);
+            CommandHandlerHelper.WriteOutputInfo(session, $"Imported {sql_file}");
+
+            RealmManager.ClearCache();
+
+            var realm = DatabaseManager.World.GetRealm(realmId);
+
+            if (realm == null)
+            {
+                CommandHandlerHelper.WriteOutputInfo(session, $"Couldn't load realm {realmId} from db");
+                return;
+            }
+        }
+
         private static void ImportSQLLandblock(Session session, string sql_folder, string sql_file)
         {
             if (!ushort.TryParse(Regex.Match(sql_file, @"[0-9A-F]{4}", RegexOptions.IgnoreCase).Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var landblockId))
@@ -1002,6 +1065,17 @@ namespace ACE.Server.Command.Handlers.Processors
                 sqlCommands = sqlCommands.Substring(0, idx);
 
             using (var ctx = new WorldDbContext())
+                ctx.Database.ExecuteSqlCommand(sqlCommands);
+        }
+
+        /// <summary>
+        /// Imports an SQL file into the database
+        /// </summary>
+        public static void ImportSQLShard(string sqlFile)
+        {
+            var sqlCommands = File.ReadAllText(sqlFile);
+
+            using (var ctx = new ShardDbContext())
                 ctx.Database.ExecuteSqlCommand(sqlCommands);
         }
 
@@ -1789,6 +1863,10 @@ namespace ACE.Server.Command.Handlers.Processors
                 case FileType.Weenie:
                     ExportSQLWeenie(session, param);
                     break;
+
+                case FileType.Realm:
+                    ExportSQLRealm(session, param);
+                    break;
             }
         }
 
@@ -1918,6 +1996,61 @@ namespace ACE.Server.Command.Handlers.Processors
             CommandHandlerHelper.WriteOutputInfo(session, $"Exported {sql_folder}{sql_filename}");
         }
 
+        public static void ExportSQLRealm(Session session, string param)
+        {
+            DirectoryInfo di = VerifyContentFolder(session, false);
+
+            var sep = Path.DirectorySeparatorChar;
+
+            if (!uint.TryParse(param, out var realmId))
+            {
+                CommandHandlerHelper.WriteOutputInfo(session, $"{param} not a valid realm id");
+                return;
+            }
+
+            var realm = DatabaseManager.World.GetRealm(realmId);
+            if (realm == null)
+            {
+                CommandHandlerHelper.WriteOutputInfo(session, $"Couldn't find realm id {realmId}");
+                return;
+            }
+
+            var sql_folder = $"{di.FullName}{sep}sql{sep}realms{sep}";
+
+            di = new DirectoryInfo(sql_folder);
+
+            if (!di.Exists)
+                di.Create();
+
+            if (RealmSQLWriter == null)
+            {
+                RealmSQLWriter = new RealmSQLWriter();
+            }
+
+            var sql_filename = RealmSQLWriter.GetDefaultFileName(realm);
+
+            try
+            {
+                var sqlFile = new StreamWriter(sql_folder + sql_filename);
+
+                RealmSQLWriter.CreateSQLDELETEStatement(realm, sqlFile);
+                sqlFile.WriteLine();
+
+                RealmSQLWriter.CreateSQLINSERTStatement(realm, sqlFile);
+                sqlFile.WriteLine();
+
+                sqlFile.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                CommandHandlerHelper.WriteOutputInfo(session, $"Failed to export {sql_folder}{sql_filename}");
+                return;
+            }
+
+            CommandHandlerHelper.WriteOutputInfo(session, $"Exported {sql_folder}{sql_filename}");
+        }
+
         public static void ExportSQLLandblock(Session session, string param)
         {
             DirectoryInfo di = VerifyContentFolder(session, false);
@@ -2034,6 +2167,8 @@ namespace ACE.Server.Command.Handlers.Processors
                     mode = CacheType.Spell;
                 if (parameters[0].Contains("weenie", StringComparison.OrdinalIgnoreCase))
                     mode = CacheType.Weenie;
+                if (parameters[0].Contains("realm", StringComparison.OrdinalIgnoreCase))
+                    mode = CacheType.Realm;
             }
 
             if (mode.HasFlag(CacheType.Landblock))
@@ -2060,6 +2195,12 @@ namespace ACE.Server.Command.Handlers.Processors
                 CommandHandlerHelper.WriteOutputInfo(session, "Clearing weenie cache");
                 DatabaseManager.World.ClearWeenieCache();
             }
+
+            if (mode.HasFlag(CacheType.Realm))
+            {
+                CommandHandlerHelper.WriteOutputInfo(session, "Clearing realm cache");
+                DatabaseManager.World.ClearRealmCache();
+            }
         }
 
         [Flags]
@@ -2070,6 +2211,7 @@ namespace ACE.Server.Command.Handlers.Processors
             Recipe    = 0x2,
             Spell     = 0x4,
             Weenie    = 0x8,
+            Realm     = 0x16,
             All       = 0xFFFF
         };
 
@@ -2128,6 +2270,8 @@ namespace ACE.Server.Command.Handlers.Processors
                         return FileType.Spell;
                     else if (line.Contains("`weenie`"))
                         return FileType.Weenie;
+                    else if (line.Contains("`realm`"))
+                        return FileType.Realm;
                     else
                         break;
                 }
