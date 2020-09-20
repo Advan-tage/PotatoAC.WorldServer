@@ -786,16 +786,9 @@ namespace ACE.Server.WorldObjects
 
             if (Level > startingLevel)
             {
-                if (PKMode)
-                    UpdateProperty(this, PropertyInt64.AvailableExperience, 0);
-
                 var message = (Level == maxLevel) ? $"You have reached the maximum level of {Level}!" : $"You are now level {Level}!";
 
-                if (PKMode)
-                    message = (Level == maxLevel) ? $"You have reached the maximum PKMode level of {Level}!" : $"You are now PKMode level {Level}!";
-
-                if (!PKMode)                    
-                    message += (AvailableSkillCredits > 0) ? $"\nYou have {AvailableExperience:#,###0} experience points and {AvailableSkillCredits} skill credits available to raise skills and attributes." : $"\nYou have {AvailableExperience:#,###0} experience points available to raise skills and attributes.";
+                message += (AvailableSkillCredits > 0) ? $"\nYou have {AvailableExperience:#,###0} experience points and {AvailableSkillCredits} skill credits available to raise skills and attributes." : $"\nYou have {AvailableExperience:#,###0} experience points available to raise skills and attributes.";
 
                 var levelUp = new GameMessagePrivateUpdatePropertyInt(this, PropertyInt.Level, Level ?? 1);
                 var currentCredits = new GameMessagePrivateUpdatePropertyInt(this, PropertyInt.AvailableSkillCredits, AvailableSkillCredits ?? 0);
@@ -837,45 +830,21 @@ namespace ACE.Server.WorldObjects
                 SetMaxVitals();
 
                 // play level up effect
-                if (PKMode)
-                    PlayParticleEffect(PlayScript.AetheriaLevelUp, Guid);
-                else
-                    PlayParticleEffect(PlayScript.LevelUp, Guid);
+                PlayParticleEffect(PlayScript.LevelUp, Guid);
 
-                // upon leveling push to pktop list
-                if (PKMode)
-                    PkModeStoredLevel = Level;
 
-                // as a player levels if they have not received nether damage resistances give them at thresholds.
-                var netheresist = GetProperty(PropertyInt.DotResistRating);
+                if (Level > 0)
+                {
+                    var dotresist = ACE.Server.Entity.CustomLevelTables.GetDotResist(Level.Value, Enlightenment);
+                    if (DotResistRating != dotresist)
+                    {
+                        SetProperty(PropertyInt.DotResistRating, dotresist);
+                        Session.Network.EnqueueSend(new GameMessageSystemChat($"You now have {DotResistRating} passive DoT resistance rating for your level and receive less damage from direct Nether attacks.", ChatMessageType.Magic));
+                    }
 
-                if (Level <= 99 && LowNetherResist == 1 && NetherFix)
-                {
-                    UpdateProperty(this, PropertyFloat.ResistNether, 0.95);
-                    SetProperty(PropertyInt.DotResistRating, 5 + (int)netheresist);
-                    Session.Network.EnqueueSend(new GameMessageSystemChat($"You now have {DotResistRating} passive DoT resistance rating for your level and receive less damage from direct Nether attacks.", ChatMessageType.Magic));
-                    SetProperty(PropertyInt.LowNetherResist, 2);
-                }
-                if (Level >= 100 && Level <= 149 && MedNetherResist == 1 && NetherFix)
-                {
-                    UpdateProperty(this, PropertyFloat.ResistNether, 0.95);
-                    SetProperty(PropertyInt.DotResistRating, 5 + (int)netheresist);
-                    Session.Network.EnqueueSend(new GameMessageSystemChat($"You now have {DotResistRating} passive DoT resistance rating for your level and receive less damage from direct Nether attacks.", ChatMessageType.Magic));
-                    SetProperty(PropertyInt.MedNetherResist, 2);
-                }
-                if (Level >= 150 && Level <= 199 && HighNetherResist == 1 && NetherFix)
-                {
-                    UpdateProperty(this, PropertyFloat.ResistNether, 0.85);
-                    SetProperty(PropertyInt.DotResistRating, 5 + (int)netheresist);
-                    Session.Network.EnqueueSend(new GameMessageSystemChat($"You now have {DotResistRating} passive DoT resistance rating for your level and receive less damage from direct Nether attacks.", ChatMessageType.Magic));
-                    SetProperty(PropertyInt.HighNetherResist, 2);
-                }
-                if (Level >= 200 && HigherNetherResist == 1 && NetherFix)
-                {
-                    UpdateProperty(this, PropertyFloat.ResistNether, 0.85);
-                    SetProperty(PropertyInt.DotResistRating, 15 + (int)netheresist);
-                    Session.Network.EnqueueSend(new GameMessageSystemChat($"You now have {DotResistRating} passive DoT resistance rating for your level and receive less damage from direct Nether attacks.", ChatMessageType.Magic));
-                    SetProperty(PropertyInt.HigherNetherResist, 2);
+                    var netherresist = ACE.Server.Entity.CustomLevelTables.GetNetherResist(Level.Value, Enlightenment);
+                    if (NetherResistRating != netherresist)
+                        UpdateProperty(this, PropertyFloat.ResistNether, netherresist);
                 }
 
                 Session.Network.EnqueueSend(new GameMessageSystemChat(message, ChatMessageType.Advancement), currentCredits);
@@ -988,14 +957,7 @@ namespace ACE.Server.WorldObjects
 
             var shareType = shareable ? ShareType.All : ShareType.None;
 
-            // a simple condition to grant pk xp versus normal quest xp. 
-            if (PKMode)
-            {
-                GrantXP(scaledXP, XpType.PK, shareType);
-                AvailableExperience = 0;
-            }
-            else
-                GrantXP(scaledXP, XpType.Quest, shareType);
+            GrantXP(scaledXP, XpType.Quest, shareType);
         }
 
         // we use GrantLevelProportionalXp as a base and then factor in the lost xp and total xp assosicated with that level
