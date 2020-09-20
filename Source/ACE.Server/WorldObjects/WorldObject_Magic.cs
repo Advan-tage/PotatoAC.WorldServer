@@ -713,6 +713,10 @@ namespace ACE.Server.WorldObjects
                     else
                     {
                         var tryDamage = (int)Math.Round(caster.GetCreatureVital(PropertyAttribute2nd.Health).Current * spell.DrainPercentage);
+
+                        if (!(caster is Player)) //Custom patch to disable life bolts for creatures
+                            tryDamage = 0;
+
                         damage = (uint)-caster.UpdateVitalDelta(caster.Health, -tryDamage);
                         caster.DamageHistory.Add(this, DamageType.Health, damage);
                         damageType = DamageType.Health;
