@@ -1,7 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-VisualStudioVersion = 16.0.30011.22
 VisualStudioVersion = 16.0.30104.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ACE.Server", "ACE.Server\ACE.Server.csproj", "{943276B8-1DCC-48C6-A98D-692D60F53E43}"
@@ -44,7 +43,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ACE.Database", "ACE.Databas
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ACE.Adapter", "ACE.Adapter\ACE.Adapter.csproj", "{3C925D75-B149-4898-8806-054D3E63A4BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ACE.GenerateSQLEnums", "ACE.GenerateSQLEnums\ACE.GenerateSQLEnums.csproj", "{229F4938-ABC0-495C-986F-9A522F636863}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ACE.GenerateSQLEnums", "ACE.GenerateSQLEnums\ACE.GenerateSQLEnums.csproj", "{229F4938-ABC0-495C-986F-9A522F636863}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,6 +54,7 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{943276B8-1DCC-48C6-A98D-692D60F53E43}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{943276B8-1DCC-48C6-A98D-692D60F53E43}.Debug|Any CPU.Build.0 = Debug|x64
 		{943276B8-1DCC-48C6-A98D-692D60F53E43}.Debug|x64.ActiveCfg = Debug|x64
 		{943276B8-1DCC-48C6-A98D-692D60F53E43}.Debug|x64.Build.0 = Debug|x64
 		{943276B8-1DCC-48C6-A98D-692D60F53E43}.Release|Any CPU.ActiveCfg = Release|x64
@@ -85,18 +85,21 @@ Global
 		{3949C280-2162-4465-A688-1F598DD9A18D}.Release|x64.ActiveCfg = Release|Any CPU
 		{3949C280-2162-4465-A688-1F598DD9A18D}.Release|x64.Build.0 = Release|Any CPU
 		{ECB8AA6F-61A5-430D-A698-8C9233AF8B27}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{ECB8AA6F-61A5-430D-A698-8C9233AF8B27}.Debug|Any CPU.Build.0 = Debug|x64
 		{ECB8AA6F-61A5-430D-A698-8C9233AF8B27}.Debug|x64.ActiveCfg = Debug|x64
 		{ECB8AA6F-61A5-430D-A698-8C9233AF8B27}.Debug|x64.Build.0 = Debug|x64
 		{ECB8AA6F-61A5-430D-A698-8C9233AF8B27}.Release|Any CPU.ActiveCfg = Release|x64
 		{ECB8AA6F-61A5-430D-A698-8C9233AF8B27}.Release|x64.ActiveCfg = Release|x64
 		{ECB8AA6F-61A5-430D-A698-8C9233AF8B27}.Release|x64.Build.0 = Release|x64
 		{3FA44AE5-D8A9-46BC-9052-B4737F5634AB}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{3FA44AE5-D8A9-46BC-9052-B4737F5634AB}.Debug|Any CPU.Build.0 = Debug|x64
 		{3FA44AE5-D8A9-46BC-9052-B4737F5634AB}.Debug|x64.ActiveCfg = Debug|x64
 		{3FA44AE5-D8A9-46BC-9052-B4737F5634AB}.Debug|x64.Build.0 = Debug|x64
 		{3FA44AE5-D8A9-46BC-9052-B4737F5634AB}.Release|Any CPU.ActiveCfg = Release|x64
 		{3FA44AE5-D8A9-46BC-9052-B4737F5634AB}.Release|x64.ActiveCfg = Release|x64
 		{3FA44AE5-D8A9-46BC-9052-B4737F5634AB}.Release|x64.Build.0 = Release|x64
 		{95628269-1C41-45D5-A6F5-018A1E49C501}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{95628269-1C41-45D5-A6F5-018A1E49C501}.Debug|Any CPU.Build.0 = Debug|x64
 		{95628269-1C41-45D5-A6F5-018A1E49C501}.Debug|x64.ActiveCfg = Debug|x64
 		{95628269-1C41-45D5-A6F5-018A1E49C501}.Debug|x64.Build.0 = Debug|x64
 		{95628269-1C41-45D5-A6F5-018A1E49C501}.Release|Any CPU.ActiveCfg = Release|x64
