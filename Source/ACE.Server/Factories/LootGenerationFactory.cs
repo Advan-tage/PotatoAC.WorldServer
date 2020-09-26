@@ -1827,6 +1827,9 @@ namespace ACE.Server.Factories
 
         private static int GetNumMajorCantrips(TreasureDeath profile)
         {
+            if (profile.Tier > 7)
+                return 0;
+
             int numMajors = 0;
 
             var dropRate = PropertyManager.GetDouble("major_cantrip_drop_rate").Item;
@@ -1878,6 +1881,9 @@ namespace ACE.Server.Factories
 
         private static int GetNumMinorCantrips(TreasureDeath profile)
         {
+            if (profile.Tier > 7)
+                return 0;
+
             int numMinors = 0;
 
             var dropRate = PropertyManager.GetDouble("minor_cantrip_drop_rate").Item;
