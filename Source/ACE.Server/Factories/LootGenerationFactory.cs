@@ -981,7 +981,13 @@ namespace ACE.Server.Factories
             // Magic stats
             int numSpells = GetSpellDistribution(profile, out int minorCantrips, out int majorCantrips, out int epicCantrips, out int legendaryCantrips);
             int numCantrips = minorCantrips + majorCantrips + epicCantrips + legendaryCantrips;
-            
+            if (numCantrips > cantrips.Length)
+            {
+                numCantrips -= minorCantrips;
+                numCantrips -= majorCantrips;
+                minorCantrips = 0;
+                majorCantrips = 0;
+            }
 
             wo.UiEffects = UiEffects.Magical;
             wo.ManaRate = manaRate;
@@ -1036,20 +1042,15 @@ namespace ACE.Server.Factories
                 }
                 Shuffle(shuffledValues);
                 int shuffledPlace = 0;
-                //minor cantripps
-                for (int a = 0; a < minorCantrips; a++)
+
+                //legendary cantrips
+                for (int a = 0; a < legendaryCantrips; a++)
                 {
-                    int spellID = cantrips[shuffledValues[shuffledPlace]][0];
+                    int spellID = cantrips[shuffledValues[shuffledPlace]][3];
                     shuffledPlace++;
                     wo.Biota.GetOrAddKnownSpell(spellID, wo.BiotaDatabaseLock, out _);
                 }
-                //major cantrips
-                for (int a = 0; a < majorCantrips; a++)
-                {
-                    int spellID = cantrips[shuffledValues[shuffledPlace]][1];
-                    shuffledPlace++;
-                    wo.Biota.GetOrAddKnownSpell(spellID, wo.BiotaDatabaseLock, out _);
-                }
+
                 // epic cantrips
                 for (int a = 0; a < epicCantrips; a++)
                 {
@@ -1057,10 +1058,19 @@ namespace ACE.Server.Factories
                     shuffledPlace++;
                     wo.Biota.GetOrAddKnownSpell(spellID, wo.BiotaDatabaseLock, out _);
                 }
-                //legendary cantrips
-                for (int a = 0; a < legendaryCantrips; a++)
+
+                //major cantrips
+                for (int a = 0; a < majorCantrips; a++)
                 {
-                    int spellID = cantrips[shuffledValues[shuffledPlace]][3];
+                    int spellID = cantrips[shuffledValues[shuffledPlace]][1];
+                    shuffledPlace++;
+                    wo.Biota.GetOrAddKnownSpell(spellID, wo.BiotaDatabaseLock, out _);
+                }
+
+                //minor cantripps
+                for (int a = 0; a < minorCantrips; a++)
+                {
+                    int spellID = cantrips[shuffledValues[shuffledPlace]][0];
                     shuffledPlace++;
                     wo.Biota.GetOrAddKnownSpell(spellID, wo.BiotaDatabaseLock, out _);
                 }
@@ -1136,8 +1146,11 @@ namespace ACE.Server.Factories
                 case 6:
                     lowSpellTier = 6;
                     break;
-                default:
+                case 7:
                     lowSpellTier = 7;
+                    break;
+                default:
+                    lowSpellTier = 8;
                     break;
             }
 
@@ -1817,6 +1830,9 @@ namespace ACE.Server.Factories
 
         private static int GetNumMajorCantrips(TreasureDeath profile)
         {
+            if (profile.Tier > 7)
+                return 0;
+
             int numMajors = 0;
 
             var dropRate = PropertyManager.GetDouble("major_cantrip_drop_rate").Item;
@@ -1868,6 +1884,9 @@ namespace ACE.Server.Factories
 
         private static int GetNumMinorCantrips(TreasureDeath profile)
         {
+            if (profile.Tier > 7)
+                return 0;
+
             int numMinors = 0;
 
             var dropRate = PropertyManager.GetDouble("minor_cantrip_drop_rate").Item;
