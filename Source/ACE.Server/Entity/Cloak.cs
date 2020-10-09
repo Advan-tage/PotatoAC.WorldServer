@@ -2,6 +2,7 @@ using System;
 
 using ACE.Common;
 using ACE.Entity.Enum;
+using ACE.Server.Managers;
 using ACE.Server.Network.GameMessages.Messages;
 using ACE.Server.WorldObjects;
 
@@ -40,6 +41,10 @@ namespace ACE.Server.Entity
             var maxProcRate = 0.25f + itemLevel * 0.01f;
             if (itemLevel < 1)
                 maxProcRate = 0.0f;
+
+            maxProcRate = Math.Min(maxProcRate, (float)PropertyManager.GetDouble("cloak-max-proc-rate", 0.25f).Item);
+            maxProcRate = Math.Clamp(maxProcRate, 0f, 1f);
+            
 
             var chance = Math.Min(damage_percent, maxProcRate);
 
@@ -100,7 +105,10 @@ namespace ACE.Server.Entity
         /// <summary>
         /// The amount of damage reduced by a cloak proced with PropertyInt.CloakWeaveProc=2
         /// </summary>
-        public static readonly int DamageReductionAmount = 200;
+        public static int DamageReductionAmount
+        {
+            get { return (int)PropertyManager.GetLong("cloak-damage-reduction", 200).Item; }
+        }
 
         /// <summary>
         /// Returns the reduced damage amount when a cloak procs
