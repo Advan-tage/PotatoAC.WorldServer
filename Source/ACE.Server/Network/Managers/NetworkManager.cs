@@ -42,6 +42,8 @@ namespace ACE.Server.Network.Managers
         /// </summary>
         public static readonly ActionQueue InboundMessageQueue = new ActionQueue();
 
+        public static int MaximumAllowedSessionsPerIPAddress { get { return (int)PropertyManager.GetLong("max-sessions-per-ip", 3).Item; } }
+
         public static void ProcessPacket(ConnectionListener connectionListener, ClientPacket packet, IPEndPoint endPoint)
         {
             if (connectionListener.ListenerEndpoint.Port == ConfigManager.Config.Server.Network.Port + 1)
@@ -113,52 +115,7 @@ namespace ACE.Server.Network.Managers
                 {
                     packetLog.Debug($"{packet}, {endPoint}");
 
-                    if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP) // Allow 6 sessions for 
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP2) // Allow 6 sessions for
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP3) // Allow 6 sessions for 
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP4) // Allow 6 sessions for 
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP5) // Allow 6 sessions for 
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP6) // Allow 6 sessions for 
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP7) // Allow 6 sessions for 
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP8) // Allow 6 sessions for 
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionEndpointTotalByAddressCount(endPoint.Address) >= 6 && NoodleDreadNoPort == ActualIP9) // Allow 6 sessions for 
-                    {
-                        log.InfoFormat("Login Request from {0} rejected. Server full. 1", endPoint);
-                        SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
-                    }
-                    else if (GetSessionCount() >= ConfigManager.Config.Server.Network.MaximumAllowedSessions && NoodleDreadNoPort != ActualIP) // For all IP's that dont have an exception
+                    if (GetSessionCount() >= ConfigManager.Config.Server.Network.MaximumAllowedSessions) // For all IP's that dont have an exception
                     {
                         log.InfoFormat("Login Request from {0} rejected. Server full. 2", endPoint);
                         SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
@@ -178,7 +135,7 @@ namespace ACE.Server.Network.Managers
                         log.DebugFormat("Login Request from {0}", endPoint);
 
                         var ipAllowsUnlimited = ConfigManager.Config.Server.Network.AllowUnlimitedSessionsFromIPAddresses.Contains(endPoint.Address.ToString());
-                        if (ipAllowsUnlimited || ConfigManager.Config.Server.Network.MaximumAllowedSessionsPerIPAddress == -1 || GetSessionEndpointTotalByAddressCount(endPoint.Address) < ConfigManager.Config.Server.Network.MaximumAllowedSessionsPerIPAddress || NoodleDreadNoPort == ActualIP || NoodleDreadNoPort == ActualIP3 || NoodleDreadNoPort == ActualIP4 || NoodleDreadNoPort == ActualIP5 || NoodleDreadNoPort == ActualIP6 || NoodleDreadNoPort == ActualIP7 || NoodleDreadNoPort == ActualIP8 || NoodleDreadNoPort == ActualIP9)
+                        if (ipAllowsUnlimited || MaximumAllowedSessionsPerIPAddress == -1 || GetSessionEndpointTotalByAddressCount(endPoint.Address) < MaximumAllowedSessionsPerIPAddress)
                         {
                             var session = FindOrCreateSession(connectionListener, endPoint);
                             if (session != null)
@@ -202,9 +159,6 @@ namespace ACE.Server.Network.Managers
                         else
                         {
                             //log.InfoFormat("Login Request from {0} rejected. Session would exceed MaximumAllowedSessionsPerIPAddress limit.", endPoint);
-                            if (NoodleDreadNoPort == ActualIP)
-                                log.InfoFormat($"{NoodleDreadNoPort}, =?= {ActualIP}");
-
                             SendLoginRequestReject(connectionListener, endPoint, CharacterError.LogonServerFull);
                         }
                     }

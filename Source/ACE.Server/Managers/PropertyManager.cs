@@ -559,7 +559,9 @@ namespace ACE.Server.Managers
                 ("ignore_burden_below_character_level", new Property<long>(100, "The minimum character level at which burden will start to apply. Retail defaults to 0.")),
                 ("pk_logout_timer_min_level", new Property<long>(100, "The minimum character level for which the pk logout timer will apply.")),
                 ("turbine_chat_min_level", new Property<long>(1, "Minimum character level to use global chat channels (General, LFG, Roleplay, Trade, Olthoi, Society, Allegience)")),
-                ("arcane_lore_bypass_level", new Property<long>(391, "Minimum arcane lore buffed skill level at which the player can bypass all lore requirements on equip."))
+                ("arcane_lore_bypass_level", new Property<long>(391, "Minimum arcane lore buffed skill level at which the player can bypass all lore requirements on equip.")),
+                ("cloak-damage-reduction", new Property<long>(200, "The amount of damage a cloak can reduce when proccing. default = 200.")),
+                ("max-sessions-per-ip", new Property<long>(3, "The maximum number of sessions per ip address. default = 3."))
                 );
 
         public static readonly ReadOnlyDictionary<string, Property<double>> DefaultDoubleProperties =
@@ -605,7 +607,8 @@ namespace ACE.Server.Managers
                 ("war_streak_spell_damage_modifier", new Property<double>(1.0, "Scales war streak Projectile magics damage for PVP")),
                 ("lotto_hollow_scaler", new Property<double>(1.0, "scales hollow lotto procs")),
                 ("void_streak_spell_damage_modifier", new Property<double>(1.0, "Scales void streak Projectile magics damage for PVP")),
-                ("consumable_speed_modifier", new Property<double>(1.0, "Scales consumable animation speed. Allows players to eat or drink at a faster rate if set to a higher number."))
+                ("consumable_speed_modifier", new Property<double>(1.0, "Scales consumable animation speed. Allows players to eat or drink at a faster rate if set to a higher number.")),
+                ("cloak-max-proc-rate", new Property<double>(0.3, "The maximum proc rate of a cloak. default = 0.3 (30%)."))
                 );
 
         public static readonly ReadOnlyDictionary<string, Property<string>> DefaultStringProperties =
