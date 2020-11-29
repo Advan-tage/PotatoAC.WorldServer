@@ -30,8 +30,18 @@ namespace ACE.Server.Command.Handlers
             "")]
         public static void HandlePop(Session session, params string[] parameters)
         {
+            var uptime = ServerManager.Uptime;
+
             if (PropertyManager.GetBool("command_pop_enabled").Item || session.AccessLevel != AccessLevel.Player)
+            {
                 session.Network.EnqueueSend(new GameMessageSystemChat($"Current world population: {PlayerManager.GetActualOnlineCount().ToString()}\n", ChatMessageType.Broadcast));
+                if (uptime.TotalHours < 1)
+                    session.Network.EnqueueSend(new GameMessageSystemChat($"Note: The server has been up for less than one hour and therefore the population count will be lower than usual.", ChatMessageType.Broadcast));
+                else if (uptime.TotalHours < 8)
+                    session.Network.EnqueueSend(new GameMessageSystemChat($"Note: The server has been up for less than 8 hours and therefore the population count will be lower than usual.", ChatMessageType.Broadcast));
+                else if (uptime.TotalHours < 24)
+                    session.Network.EnqueueSend(new GameMessageSystemChat($"Note: The server has been up for less than 24 hours and therefore the population count may be lower than usual.", ChatMessageType.Broadcast));
+            }
         }
 
         [CommandHandler("pkmode", AccessLevel.Player, CommandHandlerFlag.RequiresWorld,

@@ -42,6 +42,8 @@ namespace ACE.Server.Managers
 
         public static DateTime ShutdownTime { get; private set; } = DateTime.MinValue;
 
+        public static TimeSpan Uptime => DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime;
+
         /// <summary>
         /// Sets the Shutdown Interval in Seconds
         /// </summary>
