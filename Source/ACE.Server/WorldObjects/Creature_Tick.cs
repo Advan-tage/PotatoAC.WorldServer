@@ -568,10 +568,10 @@ namespace ACE.Server.WorldObjects
                 {
                     SetProperty(PropertyBool.IsElite, true);
                 }
-                else if (ThreadSafeRandom.Next(0.0000f, 1.0000f) <= 0.0002f && Location.Indoors) // inside spawn
+                /*else if (ThreadSafeRandom.Next(0.0000f, 1.0000f) <= 0.0002f && Location.Indoors) // inside spawn
                 {
                     SetProperty(PropertyBool.IsElite, true);
-                }
+                }*/
                 else
                 {
                     SetProperty(PropertyBool.IsElite, false);
