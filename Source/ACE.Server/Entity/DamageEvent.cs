@@ -317,7 +317,7 @@ namespace ACE.Server.Entity
             }
 
             // damage resistance rating
-            DamageResistanceRatingMod = Creature.GetNegativeRatingMod(defender.GetDamageResistRating(CombatType));
+            DamageResistanceRatingMod = defender.GetDamageResistRatingMod(CombatType);
 
 
             // pk damage reduction
