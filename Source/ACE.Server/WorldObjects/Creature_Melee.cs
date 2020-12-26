@@ -131,7 +131,7 @@ namespace ACE.Server.WorldObjects
                 var creature = obj.WeenieObj.WorldObject as Creature;
                 if (creature == null || creature.Teleporting || creature.IsDead) continue;
 
-                if (player != null && creature is Player && player.CheckPKStatusVsTarget(player, creature, null) != null)
+                if (player != null && player.CheckPKStatusVsTarget(creature, null) != null)
                     continue;
 
                 if (player != null && creature is Player)
@@ -168,7 +168,7 @@ namespace ACE.Server.WorldObjects
 
             var player = this as Player;
 
-            if (player != null && creature is Player && player.CheckPKStatusVsTarget(player, creature, null) != null)
+            if (player != null && player.CheckPKStatusVsTarget(creature, null) != null)
                 return false;
 
             if (creature is CombatPet && (player != null || this is CombatPet))

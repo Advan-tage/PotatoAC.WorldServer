@@ -804,7 +804,7 @@ namespace ACE.Server.Command.Handlers
                     try
                     {
                         var amount = aceParams[1].AsLong;
-                        aceParams[0].AsPlayer.GrantXP(amount, XpType.Admin, ShareType.None); 
+                        aceParams[0].AsPlayer.GrantXP(amount, XpType.Admin, ShareType.None);
 
                         session.Network.EnqueueSend(new GameMessageSystemChat($"{amount:N0} experience granted.", ChatMessageType.Advancement));
 
@@ -1648,7 +1648,7 @@ namespace ACE.Server.Command.Handlers
         /// <summary>
         /// Shows the list of objects currently known to an object
         /// </summary>
-        [CommandHandler("knownobjs", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of objects currently known to an object", "/knownobjs")]
+        [CommandHandler("knownobjs", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of objects currently known to an object", "<optional guid, or optional 'target' for last appraisal target>")]
         public static void HandleKnownObjs(Session session, params string[] parameters)
         {
             var target = GetObjectMaintTarget(session, parameters);
@@ -1664,7 +1664,7 @@ namespace ACE.Server.Command.Handlers
         /// <summary>
         /// Shows the list of objects currently visible to an object
         /// </summary>
-        [CommandHandler("visibleobjs", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of objects currently visible to an object", "/visibleobjs")]
+        [CommandHandler("visibleobjs", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of objects currently visible to an object", "<optional guid, or optional 'target' for last appraisal target>")]
         public static void HandleVisibleObjs(Session session, params string[] parameters)
         {
             var target = GetObjectMaintTarget(session, parameters);
@@ -1681,7 +1681,7 @@ namespace ACE.Server.Command.Handlers
         /// Shows the list of players known to an object
         /// KnownPlayers are used for broadcasting
         /// </summary>
-        [CommandHandler("knownplayers", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of players known to an object", "/knownplayers")]
+        [CommandHandler("knownplayers", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of players known to an object", "<optional guid, or optional 'target' for last appraisal target>")]
         public static void HandleKnownPlayers(Session session, params string[] parameters)
         {
             var target = GetObjectMaintTarget(session, parameters);
@@ -1695,21 +1695,25 @@ namespace ACE.Server.Command.Handlers
         }
 
         /// <summary>
-        /// Shows the list of players visible to this player
+        /// Shows the list of players visible to a player
         /// </summary>
-        [CommandHandler("visibleplayers", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of players visible to this player", "/visibleplayers")]
+        [CommandHandler("visibleplayers", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of players visible to a player", "<optional guid, or optional 'target' for last appraisal target>")]
         public static void HandleVisiblePlayers(Session session, params string[] parameters)
         {
-            Console.WriteLine($"\nVisible players to {session.Player.Name}: {session.Player.PhysicsObj.ObjMaint.GetVisibleObjectsValuesWhere(o => o.IsPlayer).Count}");
+            var target = GetObjectMaintTarget(session, parameters);
+            if (target == null)
+                return;
 
-            foreach (var obj in session.Player.PhysicsObj.ObjMaint.GetVisibleObjectsValuesWhere(o => o.IsPlayer))
+            Console.WriteLine($"\nVisible players to {target.Name}: {target.PhysicsObj.ObjMaint.GetVisibleObjectsValuesWhere(o => o.IsPlayer).Count}");
+
+            foreach (var obj in target.PhysicsObj.ObjMaint.GetVisibleObjectsValuesWhere(o => o.IsPlayer))
                 Console.WriteLine($"{obj.Name} ({obj.ID:X8})");
         }
 
         /// <summary>
         /// Shows the list of targets currently visible to a monster
         /// </summary>
-        [CommandHandler("visibletargets", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of targets currently visible to a monster", "/knownplayers")]
+        [CommandHandler("visibletargets", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of targets currently visible to a monster", "<optional guid, or optional 'target' for last appraisal target>")]
         public static void HandleVisibleTargets(Session session, params string[] parameters)
         {
             var target = GetObjectMaintTarget(session, parameters);
@@ -1723,16 +1727,36 @@ namespace ACE.Server.Command.Handlers
         }
 
         /// <summary>
-        /// Shows the list of previously visible objects queued for destruction for this player
+        /// Shows the list of retaliate targets for a monster
         /// </summary>
-        [CommandHandler("destructionqueue", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of previously visible objects queued for destruction for this player", "/destructionqueue")]
+        [CommandHandler("retaliatetargets", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of retaliate targets for a monster", "<optional guid, or optional 'target' for last appraisal target>")]
+        public static void HandleRetaliateTargets(Session session, params string[] parameters)
+        {
+            var target = GetObjectMaintTarget(session, parameters);
+            if (target == null)
+                return;
+
+            Console.WriteLine($"\nRetaliate targets to {target.Name}: {target.PhysicsObj.ObjMaint.GetRetaliateTargetsCount()}");
+
+            foreach (var obj in target.PhysicsObj.ObjMaint.GetRetaliateTargetsValues())
+                Console.WriteLine($"{obj.Name} ({obj.ID:X8})");
+        }
+
+        /// <summary>
+        /// Shows the list of previously visible objects queued for destruction for a player
+        /// </summary>
+        [CommandHandler("destructionqueue", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 0, "Shows the list of previously visible objects queued for destruction for a player", "<optional guid, or optional 'target' for last appraisal target>")]
         public static void HandleDestructionQueue(Session session, params string[] parameters)
         {
-            Console.WriteLine($"\nDestruction queue for {session.Player.Name}: {session.Player.PhysicsObj.ObjMaint.GetDestructionQueueCount()}");
+            var target = GetObjectMaintTarget(session, parameters);
+            if (target == null)
+                return;
+
+            Console.WriteLine($"\nDestruction queue for {target.Name}: {target.PhysicsObj.ObjMaint.GetDestructionQueueCount()}");
 
             var currentTime = Physics.Common.PhysicsTimer.CurrentTime;
 
-            foreach (var obj in session.Player.PhysicsObj.ObjMaint.GetDestructionQueueCopy())
+            foreach (var obj in target.PhysicsObj.ObjMaint.GetDestructionQueueCopy())
                 Console.WriteLine($"{obj.Key.Name} ({obj.Key.ID:X8}): {obj.Value - currentTime}");
         }
 
@@ -1762,7 +1786,6 @@ namespace ACE.Server.Command.Handlers
         }
 
  
-
 
         /// <summary>
         /// Sets the house purchase time for this player
@@ -2492,7 +2515,7 @@ namespace ACE.Server.Command.Handlers
                             foreach (var spawn in profile.RemoveQueue)
                             {
                                 var action = "";
-                                switch((RegenerationType)profile.Biota.WhenCreate)
+                                switch ((RegenerationType)profile.Biota.WhenCreate)
                                 {
                                     case RegenerationType.Death:
                                         action = "died";
@@ -3019,6 +3042,129 @@ namespace ACE.Server.Command.Handlers
 
                 PlayerManager.BroadcastToAuditChannel(session.Player, $"{session.Player.Name} changed their Faction state to {session.Player.Society.ToSentence()}{(session.Player.Society != FactionBits.None ? $" with a rank of {rankStr}" : "")}.");
             }
+        }
+
+        [CommandHandler("delevel", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 1, "Attempts to delevel the current player. Requires enough unassigned xp and unspent skill credits.", "new level")]
+        public static void HandleDelevel(Session session, params string[] parameters)
+        {
+            HandleDelevel(session, false, parameters);
+        }
+
+        public static void HandleDelevel(Session session, bool confirmed, params string[] parameters)
+        {
+            if (!int.TryParse(parameters[0], out int delevel))
+            {
+                session.Network.EnqueueSend(new GameMessageSystemChat($"Invalid level {parameters[0]}", ChatMessageType.Broadcast));
+                return;
+            }
+            if (delevel < 1 || delevel > Player.GetMaxLevel())
+            {
+                session.Network.EnqueueSend(new GameMessageSystemChat($"Invalid level {delevel}", ChatMessageType.Broadcast));
+                return;
+            }
+            if (delevel > session.Player.Level)
+            {
+                session.Network.EnqueueSend(new GameMessageSystemChat($"Delevel # must be less than current level {session.Player.Level}", ChatMessageType.Broadcast));
+                return;
+            }
+
+            // get amount of unassigned xp required
+            var currentLevel = session.Player.Level.Value;
+            var xpBetweenLevels = (long)session.Player.GetXPBetweenLevels(delevel, currentLevel);
+            var xpIntoCurrentLevel = session.Player.TotalExperience - (long)DatManager.PortalDat.XpTable.CharacterLevelXPList[currentLevel];
+            var unassignedXPRequired = xpBetweenLevels + xpIntoCurrentLevel;
+
+            session.Network.EnqueueSend(new GameMessageSystemChat($"Unassigned XP required: {unassignedXPRequired:N0}", ChatMessageType.Broadcast));
+
+            if (session.Player.AvailableExperience < unassignedXPRequired)
+            {
+                session.Network.EnqueueSend(new GameMessageSystemChat($"You only have {session.Player.AvailableExperience:N0} unassigned XP -- delevel failed", ChatMessageType.Broadcast));
+                return;
+            }
+
+            // get # of available skill credits required
+            var skillCreditsRequired = 0;
+            for (var i = delevel + 1; i <= currentLevel; i++)
+                skillCreditsRequired += (int)DatManager.PortalDat.XpTable.CharacterLevelSkillCreditList[i];
+
+            session.Network.EnqueueSend(new GameMessageSystemChat($"Skill credits required: {skillCreditsRequired:N0}", ChatMessageType.Broadcast));
+
+            if (session.Player.AvailableSkillCredits < skillCreditsRequired)
+            {
+                session.Network.EnqueueSend(new GameMessageSystemChat($"You only have {session.Player.AvailableSkillCredits:N0} available skill credits -- delevel failed", ChatMessageType.Broadcast));
+                return;
+            }
+
+            if (!confirmed)
+            {
+                var msg = $"Are you sure you want to delevel {session.Player.Name} to level {delevel}?";
+                session.Player.ConfirmationManager.EnqueueSend(new Confirmation_Custom(session.Player.Guid, () => HandleDelevel(session, true, parameters)), msg);
+                return;
+            }
+
+            session.Network.EnqueueSend(new GameMessageSystemChat($"Deleveling {session.Player.Name} to level {delevel}", ChatMessageType.Broadcast));
+
+            var newAvailableExperience = session.Player.AvailableExperience - unassignedXPRequired;
+            var newTotalExperience = session.Player.TotalExperience - unassignedXPRequired;
+
+            var newAvailableSkillCredits = session.Player.AvailableSkillCredits - skillCreditsRequired;
+            var newTotalSkillCredits = session.Player.TotalSkillCredits - skillCreditsRequired;
+
+            session.Player.UpdateProperty(session.Player, PropertyInt64.AvailableExperience, newAvailableExperience);
+            session.Player.UpdateProperty(session.Player, PropertyInt64.TotalExperience, newTotalExperience);
+
+            session.Player.UpdateProperty(session.Player, PropertyInt.AvailableSkillCredits, newAvailableSkillCredits);
+            session.Player.UpdateProperty(session.Player, PropertyInt.TotalSkillCredits, newTotalSkillCredits);
+
+            session.Player.UpdateProperty(session.Player, PropertyInt.Level, delevel);
+
+            PlayerManager.BroadcastToAuditChannel(session.Player, $"{session.Player.Name} has deleveled themselves from {currentLevel} to {session.Player.Level} - unassignedXPRequired: {unassignedXPRequired:N0} | skillCreditsRequired: {skillCreditsRequired:N0}");
+        }
+
+        [CommandHandler("monsterspell", AccessLevel.Developer, CommandHandlerFlag.RequiresWorld, 1, "The last appraised creature casts a spell. For targeted spells, defaults to the current player.", "optional target guid")]
+        public static void HandleMonsterProj(Session session, params string[] parameters)
+        {
+            if (!Enum.TryParse(parameters[0], out SpellId spellId))
+            {
+                CommandHandlerHelper.WriteOutputInfo(session, $"Invalid SpellId {spellId}");
+                return;
+            }
+            var spell = new Spell(spellId);
+            if (spell.NotFound)
+            {
+                CommandHandlerHelper.WriteOutputInfo(session, $"Couldn't find SpellId {spellId}");
+                return;
+            }
+
+            var attackTarget = session.Player as Creature;
+
+            if (parameters.Length > 1)
+            {
+                if (!uint.TryParse(parameters[1], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var targetGuid))
+                {
+                    CommandHandlerHelper.WriteOutputInfo(session, $"Invalid target guid: {parameters[1]}");
+                    return;
+                }
+
+                attackTarget = session.Player.FindObject(targetGuid, Player.SearchLocations.Landblock) as Creature;
+
+                if (attackTarget == null)
+                {
+                    CommandHandlerHelper.WriteOutputInfo(session, $"Couldn't find attack target {targetGuid:X8}");
+                    return;
+                }
+            }
+            var monster = CommandHandlerHelper.GetLastAppraisedObject(session) as Creature;
+
+            if (monster == null)
+                return;
+
+            var prevAttackTarget = monster.AttackTarget;
+            monster.AttackTarget = attackTarget;
+
+            monster.CastSpell(spell);
+
+            monster.AttackTarget = prevAttackTarget;
         }
     }
 }

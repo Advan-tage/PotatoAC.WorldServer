@@ -1050,5 +1050,10 @@ namespace ACE.Server.WorldObjects
             else
                 return new List<WorldObject>() { this };
         }
+
+        public bool HasArmorLevel()
+        {
+            return ArmorLevel > 0;
+        }
     }
 }
