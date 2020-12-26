@@ -790,7 +790,7 @@ namespace ACE.Server.WorldObjects
             //Console.WriteLine($"Sneak attack {(behind ? "behind" : "front")}, chance {Math.Round(chance * 100)}%");
 
             var rng = ThreadSafeRandom.Next(0.0f, 1.0f);
-            if (rng > chance)
+            if (rng >= chance)
                 return 1.0f;
 
             // Damage Rating:
@@ -886,7 +886,7 @@ namespace ACE.Server.WorldObjects
             }
 
             var rng = ThreadSafeRandom.Next(0.0f, 1.0f);
-            if (rng > chance)
+            if (rng >= chance)
                 return;
 
             switch (AttackHeight)
