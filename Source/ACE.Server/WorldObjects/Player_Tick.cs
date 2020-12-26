@@ -495,6 +495,12 @@ namespace ACE.Server.WorldObjects
             }
         }
 
+        private static HashSet<uint> buggedCells = new HashSet<uint>()
+        {
+            0xD6990112,
+            0xD599012C
+        };
+
         public bool ValidateMovement(ACE.Entity.Position newPosition)
         {
             if (CurrentLandblock == null)
@@ -503,7 +509,10 @@ namespace ACE.Server.WorldObjects
             if (!Teleporting && Location.Landblock != newPosition.Cell >> 16)
             {
                 if ((Location.Cell & 0xFFFF) >= 0x100 && (newPosition.Cell & 0xFFFF) >= 0x100)
-                    return false;
+                {
+                    if (!buggedCells.Contains(Location.Cell) || !buggedCells.Contains(newPosition.Cell))
+                        return false;
+                }
 
                 if (!Location.Indoors && !newPosition.Indoors)
                     return true;

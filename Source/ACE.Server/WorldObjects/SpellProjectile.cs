@@ -750,7 +750,7 @@ namespace ACE.Server.WorldObjects
 
                 if (equippedCloak != null && Cloak.HasDamageProc(equippedCloak) && Cloak.RollProc(equippedCloak, percent))
                 {
-                    var reducedDamage = Cloak.GetReducedAmount(damage);
+                    var reducedDamage = Cloak.GetReducedAmount(ProjectileSource, damage);
 
                     Cloak.ShowMessage(target, ProjectileSource, damage, reducedDamage);
 
