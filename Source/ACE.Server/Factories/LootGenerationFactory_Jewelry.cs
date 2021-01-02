@@ -58,14 +58,14 @@ namespace ACE.Server.Factories
             // workmanship
             wo.ItemWorkmanship = WorkmanshipChance.Roll(profile.Tier);
 
-            if (profile.Tier >= 6)
+            // wield requirements (verify)
+            if (profile.Tier > 6)
             {
                 wo.WieldRequirements = WieldRequirement.Level;
                 wo.WieldSkillType = (int)Skill.Axe;  // Set by examples from PCAP data
 
                 var wield = profile.Tier switch
                 {
-                    6 => 100,
                     7 => 150,// In this instance, used for indicating player level, rather than skill level
                     _ => 180,// In this instance, used for indicating player level, rather than skill level
                 };

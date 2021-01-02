@@ -949,6 +949,7 @@ namespace ACE.Server.WorldObjects
                             corpse.TryAddToInventory(fiveusemfk);
                         }// Elites level 100+ will drop a reinforced manaforge key.
 
+                        /*
                         if (IsElite && OncePass2 == 0 && Level > 150)
                         {
                             OncePass2 = 1;
@@ -984,6 +985,7 @@ namespace ACE.Server.WorldObjects
                                 corpse.TryAddToInventory(spellcomp85);
                             }// 25% for 5
                         }// elites level 150+ drop up to 5 level 8 spell comps
+                    */
                     }
                     else
                         droppedItems.Add(wo);

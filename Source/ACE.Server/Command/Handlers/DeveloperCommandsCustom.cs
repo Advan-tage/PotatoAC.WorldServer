@@ -248,8 +248,8 @@ namespace ACE.Server.Command.Handlers
             PlayerManager.BroadcastToAuditChannel(session?.Player, $"{session?.Player?.Name ?? "*Console Admin*"} changed a property for {obj.Name} ({obj.Guid}): {prop} = {value}");
 
             // hack for easier testing
-            if (pType == typeof(PropertyInt) && (PropertyInt)result == PropertyInt.Faction1Bits && obj is Creature creature && creature.RetaliateTargets == null)
-                creature.RetaliateTargets = new HashSet<uint>();
+            //if (pType == typeof(PropertyInt) && (PropertyInt)result == PropertyInt.Faction1Bits && obj is Creature creature && creature.RetaliateTargets == null)
+            //    creature.RetaliateTargets = new HashSet<uint>();
         }
 
         private static bool TryParseGuid(string guidstring, out uint guid)
@@ -463,8 +463,8 @@ namespace ACE.Server.Command.Handlers
             PlayerManager.BroadcastToAuditChannel(session.Player, $"{session.Player.Name} changed a property for {obj.Name} ({obj.Guid}): {prop} = {value}");
 
             // hack for easier testing
-            if (pType == typeof(PropertyInt) && (PropertyInt)result == PropertyInt.Faction1Bits && obj is Creature creature && creature.RetaliateTargets == null)
-                creature.RetaliateTargets = new HashSet<uint>();
+            //if (pType == typeof(PropertyInt) && (PropertyInt)result == PropertyInt.Faction1Bits && obj is Creature creature && creature.RetaliateTargets == null)
+            //    creature.RetaliateTargets = new HashSet<uint>();
         }
     }
 }

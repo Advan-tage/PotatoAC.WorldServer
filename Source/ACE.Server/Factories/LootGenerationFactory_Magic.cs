@@ -158,7 +158,7 @@ namespace ACE.Server.Factories
                 }
             }
 
-            if (tier == 9)
+            if (numCantrips > 0)
             {
                 shuffledValues = Enumerable.Range(0, cantrips.Length).ToArray();
                 Shuffle(shuffledValues);

@@ -91,21 +91,9 @@ namespace ACE.Server.Factories
             // try mutate burden, if MutateFilter exists
             if (wo.HasMutateFilter(MutateFilter.EncumbranceVal))
                 MutateBurden(wo, profile, false);
-            double materialMod = LootTables.getMaterialValueModifier(wo);
-            double gemMaterialMod = LootTables.getGemMaterialValueModifier(wo);
-            var value = GetValue(profile.Tier, workmanship, gemMaterialMod, materialMod);
-            wo.Value = value;
-
-            int wield;
-            if (profile.Tier >= 6 && armorType != LootTables.ArmorType.CovenantArmor && armorType != LootTables.ArmorType.OlthoiArmor)
-            {
-                wo.WieldRequirements = WieldRequirement.Level;
-                wo.WieldSkillType = (int)Skill.Axe;  // Set by examples from PCAP data
 
             if (roll == null)
             {
-                    6 => 100,// In this instance, used for indicating player level, rather than skill level
-                    7 => 150,
                 if (armorType == LootTables.ArmorType.CovenantArmor || armorType == LootTables.ArmorType.OlthoiArmor)
                 {
                     int chance = ThreadSafeRandom.Next(1, 3);
@@ -190,16 +178,6 @@ namespace ACE.Server.Factories
             //Console.WriteLine($"Mutating {wo.Name} with {scriptName}");
 
             var mutationFilter = MutationCache.GetMutation(scriptName);
-            // Last condition included to prevent equipment set Ids being added to armor weenies
-            // that would be assigned AL via AssignArmorLevelCompat()
-            if (PropertyManager.GetBool("equipmentsetid_enabled").Item
-                && wo.ClothingPriority != (CoverageMask)CoverageMaskHelper.Underwear && !wo.IsShield && profile.Tier >= 6
-                && (wo.GetProperty(PropertyInt.Version) ?? 0) >= 3)
-            {
-                if (wo.WieldRequirements == WieldRequirement.Level || wo.WieldRequirements == WieldRequirement.RawSkill)
-                {
-                    double dropRate = PropertyManager.GetDouble("equipmentsetid_drop_rate").Item;
-                    double dropRateMod = 1.0 / dropRate;
 
             return mutationFilter.TryMutate(wo, profile.Tier);
         }
@@ -776,7 +754,7 @@ namespace ACE.Server.Factories
             // even chance between 11 different types of cloaks
             var cloakType = ThreadSafeRandom.Next(0, LootTables.Cloaks.Length - 1);
 
-            var cloakWeenie  = LootTables.Cloaks[cloakType];
+            var cloakWeenie = LootTables.Cloaks[cloakType];
 
             var wo = WorldObjectFactory.CreateNewWorldObject((uint)cloakWeenie);
 
@@ -856,7 +834,7 @@ namespace ACE.Server.Factories
             {
                 case 1:
                 case 2:
-                default:                
+                default:
                     cloakLevel = 1;
                     break;
                 case 3:
@@ -1013,7 +991,7 @@ namespace ACE.Server.Factories
                 if (wo.WieldDifficulty < 180)
                     wo.WieldDifficulty = 180;
             }
-            else 
+            else
             {
                 // this can either be empty, or in the case of covenant / olthoi armor,
                 // it could already contain a level requirement of 180, or possibly 150 in tier 8
