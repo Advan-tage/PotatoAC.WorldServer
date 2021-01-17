@@ -50,9 +50,22 @@ namespace ACE.Server.WorldObjects
                     Account15Days = true;
             }
 
-            if (EliteTrigger)
+                        if (EliteTrigger)
             {
                 SetProperty(PropertyBool.EliteTrigger, false);
+            }
+            
+            if (PlayerKillerStatus == PlayerKillerStatus.PKLite && !PropertyManager.GetBool("pkl_server").Item)
+            {
+                PlayerKillerStatus = PlayerKillerStatus.NPK;
+
+                var actionChain = new ActionChain();
+                actionChain.AddDelaySeconds(3.0f);
+                actionChain.AddAction(this, () =>
+                {
+                    Session.Network.EnqueueSend(new GameEventWeenieError(Session, WeenieError.YouAreNonPKAgain));
+                });
+                actionChain.EnqueueChain();
             }
 
             // SendSelf will trigger the entrance into portal space
@@ -102,19 +115,6 @@ namespace ACE.Server.WorldObjects
             HandleSkillSpecCreditRefund();
             HandleFreeSkillResetRenewal();
             HandleFreeAttributeResetRenewal();
-
-            if (PlayerKillerStatus == PlayerKillerStatus.PKLite && !PropertyManager.GetBool("pkl_server").Item)
-            {
-                var actionChain = new ActionChain();
-                actionChain.AddDelaySeconds(3.0f);
-                actionChain.AddAction(this, () =>
-                {
-                    UpdateProperty(this, PropertyInt.PlayerKillerStatus, (int)PlayerKillerStatus.NPK, true);
-
-                    Session.Network.EnqueueSend(new GameEventWeenieError(Session, WeenieError.YouAreNonPKAgain));
-                });
-                actionChain.EnqueueChain();
-            }
 
             HandleDBUpdates();
 
