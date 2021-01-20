@@ -177,7 +177,7 @@ namespace ACE.Server.Managers
                 return;
             }
 
-            var success = ThreadSafeRandom.Next(0.0f, 1.0f) <= successChance;
+            var success = ThreadSafeRandom.Next(0.0f, 1.0f) < successChance;
 
             CreateDestroyItems(player, recipe, source, target, success);
 
@@ -379,7 +379,7 @@ namespace ACE.Server.Managers
 
         public static void DoTinkering(Player player, WorldObject tool, WorldObject target, Recipe recipe, float chance, bool incItemTinkered)
         {
-            var success = ThreadSafeRandom.Next(0.0f, 1.0f) <= chance;
+            var success = ThreadSafeRandom.Next(0.0f, 1.0f) < chance;
 
             var sourceName = Regex.Replace(tool.NameWithMaterial, @" \(\d+\)$", "");
 
@@ -572,58 +572,22 @@ namespace ACE.Server.Managers
                     break;
                 case MaterialType.Copper:
 
-                    if (target.WieldSkillType != (int)Skill.MissileDefense)
+                    if (target.ItemSkillLimit != Skill.MissileDefense || target.ItemSkillLevelLimit == null)
                         return;
 
-                    // change wield requirement: missile defense -> melee defense
-                    target.WieldSkillType = (int)Skill.MeleeDefense;
-                    target.ItemSkillLimit = (int)Skill.MeleeDefense;      // recipe requirements check for this field
-
-                    // increase the wield difficulty
-                    if (target.WieldDifficulty != null)
-                    {
-                        target.WieldDifficulty = target.WieldDifficulty switch
-                        {
-                            // todo: figure out the exact formula for this conversion
-                            160 => 200,
-                            205 => 250,
-                            245 => 300,
-                            270 => 325,
-                            290 => 350,
-                            305 => 370,
-                            330 => 400,
-                            340 => 410,
-                            _ => (int)Math.Round(target.WieldDifficulty.Value * 1.25f)
-                        };
-                    }
+                    // change activation requirement: missile defense -> melee defense
+                    target.ItemSkillLimit = Skill.MeleeDefense;
+                    target.ItemSkillLevelLimit = (int)(target.ItemSkillLevelLimit / 0.7f);
                     break;
 
                 case MaterialType.Silver:
 
-                    if (target.WieldSkillType != (int)Skill.MeleeDefense)
+                    if (target.ItemSkillLimit != Skill.MeleeDefense || target.ItemSkillLevelLimit == null)
                         return;
 
-                    // change wield requirement: melee defense -> missile defense
-                    target.WieldSkillType = (int)Skill.MissileDefense;
-                    target.ItemSkillLimit = (int)Skill.MissileDefense;      // recipe requirements check for this field
-
-                    // decrease the wield difficulty
-                    if (target.WieldDifficulty != null)
-                    {
-                        target.WieldDifficulty = target.WieldDifficulty switch
-                        {
-                            // todo: figure out the exact formula for this conversion
-                            200 => 160,
-                            250 => 205,
-                            300 => 245,
-                            325 => 270,
-                            350 => 290,
-                            370 => 305,
-                            400 => 330,
-                            410 => 340,
-                            _ => (int)Math.Round(target.WieldDifficulty.Value * 0.8f)
-                        };
-                    }
+                    // change activation requirement: melee defense -> missile defense
+                    target.ItemSkillLimit = Skill.MissileDefense;
+                    target.ItemSkillLevelLimit = (int)(target.ItemSkillLevelLimit * 0.7f);
                     break;
 
                 case MaterialType.Silk:
@@ -1976,7 +1940,7 @@ namespace ACE.Server.Managers
                                 }
                                 else if (target.Biota.SpellIsKnown(4711, target.BiotaDatabaseLock)) // if epic already exists upgrade to legendary
                                 {
-                                    AddSpell(player, target, SpellId.CantripAxeAptitude4); // adds legendary
+                                    AddSpell(player, target, SpellId.CantripLightWeaponsAptitude4); // adds legendary
                                     target.Biota.TryRemoveKnownSpell(4711, target.BiotaDatabaseLock); // removes epic
                                     target.Damage += 3;
                                     PlayerManager.BroadcastToAll(new GameMessageSystemChat($"[TINKERING] {player.Name} just got super lucky applying iron to their {target.NameWithMaterial}! They have upgraded their Epic Cantrip, it is now Legendary Light Weapons Aptitude!", ChatMessageType.Broadcast));
@@ -2005,7 +1969,7 @@ namespace ACE.Server.Managers
                                 if (!target.Biota.SpellIsKnown(2531, target.BiotaDatabaseLock) && !target.Biota.SpellIsKnown(4712, target.BiotaDatabaseLock)
                                        && !target.Biota.SpellIsKnown(6072, target.BiotaDatabaseLock)) // if no cantrip add minor                                
                                 {
-                                    AddSpell(player, target, SpellId.CANTRIPSWORDAPTITUDE2); // adds major
+                                    AddSpell(player, target, SpellId.CANTRIPHEAVYWEAPONSAPTITUDE2); // adds major
                                     target.Biota.TryRemoveKnownSpell(2566, target.BiotaDatabaseLock); // removes minor
                                     target.Damage += 3;
                                     player.Session.Network.EnqueueSend(new GameMessageSystemChat($"Rolled {xtramodroll}. Nice! You added Major Heavy Weapons Aptitude to your {target.NameWithMaterial}!", ChatMessageType.Broadcast));
@@ -2013,7 +1977,7 @@ namespace ACE.Server.Managers
                                 }
                                 else if (target.Biota.SpellIsKnown(2531, target.BiotaDatabaseLock)) // if major already exists upgrade to epic
                                 {
-                                    AddSpell(player, target, SpellId.CANTRIPSWORDAPTITUDE3); // adds epic
+                                    AddSpell(player, target, SpellId.CANTRIPHEAVYWEAPONSAPTITUDE3); // adds epic
                                     target.Biota.TryRemoveKnownSpell(2531, target.BiotaDatabaseLock); // removes major
                                     target.Damage += 3;
                                     player.Session.Network.EnqueueSend(new GameMessageSystemChat($"Rolled {xtramodroll}. Nice! Your {target.NameWithMaterial} had its Major Heavy Weapons Aptitude upgraded to Epic Heavy Weapons Aptitude!", ChatMessageType.Broadcast));
@@ -2021,7 +1985,7 @@ namespace ACE.Server.Managers
                                 }
                                 else if (target.Biota.SpellIsKnown(4712, target.BiotaDatabaseLock)) // if epic already exists upgrade to legendary
                                 {
-                                    AddSpell(player, target, SpellId.CantripSwordAptitude4); // adds legendary
+                                    AddSpell(player, target, SpellId.CantripHeavyWeaponsAptitude4); // adds legendary
                                     target.Biota.TryRemoveKnownSpell(4712, target.BiotaDatabaseLock); // removes epic
                                     target.Damage += 3;
                                     PlayerManager.BroadcastToAll(new GameMessageSystemChat($"[TINKERING] {player.Name} just got super lucky applying iron to their {target.NameWithMaterial}! They have upgraded their Epic Heavy Weapons Aptitude to Legendary Heavy Weapons Aptitude!", ChatMessageType.Broadcast));
@@ -2049,7 +2013,7 @@ namespace ACE.Server.Managers
                                 if (!target.Biota.SpellIsKnown(2509, target.BiotaDatabaseLock) && !target.Biota.SpellIsKnown(4691, target.BiotaDatabaseLock)
                                        && !target.Biota.SpellIsKnown(6047, target.BiotaDatabaseLock)) // if no cantrip add minor                                
                                 {
-                                    AddSpell(player, target, SpellId.CANTRIPDAGGERAPTITUDE2); // adds major
+                                    AddSpell(player, target, SpellId.CANTRIPFINESSEWEAPONSAPTITUDE2); // adds major
                                     target.Biota.TryRemoveKnownSpell(2544, target.BiotaDatabaseLock); // removes minor
                                     target.Damage += 3;
                                     player.Session.Network.EnqueueSend(new GameMessageSystemChat($"Rolled {xtramodroll}. Nice! You added Major Finesse Weapons Aptitude to your {target.NameWithMaterial}!", ChatMessageType.Broadcast));
@@ -2057,7 +2021,7 @@ namespace ACE.Server.Managers
                                 }
                                 else if (target.Biota.SpellIsKnown(2509, target.BiotaDatabaseLock)) // if major already exists upgrade to epic
                                 {
-                                    AddSpell(player, target, SpellId.CANTRIPDAGGERAPTITUDE3); // adds epic
+                                    AddSpell(player, target, SpellId.CANTRIPFINESSEWEAPONSAPTITUDE3); // adds epic
                                     target.Biota.TryRemoveKnownSpell(2509, target.BiotaDatabaseLock); // removes major
                                     target.Damage += 3;
                                     player.Session.Network.EnqueueSend(new GameMessageSystemChat($"Rolled {xtramodroll}. Nice! Your {target.NameWithMaterial} had its Major Finesse Weapons Aptitude upgraded to Epic Finesse Weapons Aptitude!", ChatMessageType.Broadcast));
@@ -2065,7 +2029,7 @@ namespace ACE.Server.Managers
                                 }
                                 else if (target.Biota.SpellIsKnown(4691, target.BiotaDatabaseLock)) // if epic already exists upgrade to legendary
                                 {
-                                    AddSpell(player, target, SpellId.CantripDaggerAptitude4); // adds legendary
+                                    AddSpell(player, target, SpellId.CantripFinesseWeaponsAptitude4); // adds legendary
                                     target.Biota.TryRemoveKnownSpell(4691, target.BiotaDatabaseLock); // removes epic
                                     target.Damage += 3;
                                     PlayerManager.BroadcastToAll(new GameMessageSystemChat($"[TINKERING] {player.Name} just got super lucky applying iron to their {target.NameWithMaterial}! They have upgraded their Epic Finesse Weapons Aptitude to Legendary Finesse Weapons Aptitude!", ChatMessageType.Broadcast));
@@ -2814,7 +2778,7 @@ namespace ACE.Server.Managers
                                 if (!target.Biota.SpellIsKnown(2505, target.BiotaDatabaseLock) && !target.Biota.SpellIsKnown(4687, target.BiotaDatabaseLock)
                                        && !target.Biota.SpellIsKnown(6044, target.BiotaDatabaseLock)) // if no cantrip add minor                                
                                 {
-                                    AddSpell(player, target, SpellId.CANTRIPBOWAPTITUDE2); // adds major
+                                    AddSpell(player, target, SpellId.CANTRIPMISSILEWEAPONSAPTITUDE2); // adds major
                                     target.DamageMod += 0.04f;
                                     target.Biota.TryRemoveKnownSpell(2540, target.BiotaDatabaseLock); // removes minor
                                     player.Session.Network.EnqueueSend(new GameMessageSystemChat($"Rolled {xtramodroll}. Nice! You added Major Missile Weapons Aptitude to your {target.NameWithMaterial}! New Bonus Damage Mod {target.DamageMod:N2}(+4%)", ChatMessageType.Broadcast));
@@ -2822,7 +2786,7 @@ namespace ACE.Server.Managers
                                 }
                                 else if (target.Biota.SpellIsKnown(2505, target.BiotaDatabaseLock)) // if major already exists upgrade to epic
                                 {
-                                    AddSpell(player, target, SpellId.CANTRIPBOWAPTITUDE3); // adds epic
+                                    AddSpell(player, target, SpellId.CANTRIPMISSILEWEAPONSAPTITUDE3); // adds epic
                                     target.DamageMod += 0.04f;
                                     target.Biota.TryRemoveKnownSpell(2505, target.BiotaDatabaseLock); // removes major
                                     player.Session.Network.EnqueueSend(new GameMessageSystemChat($"Rolled {xtramodroll}. Nice! Your {target.NameWithMaterial} had its Major Missile Weapons Aptitude upgraded to Epic Missile Weapons Aptitude! New Bonus Damage Mod {target.DamageMod:N2}(+4%)", ChatMessageType.Broadcast));
@@ -2830,7 +2794,7 @@ namespace ACE.Server.Managers
                                 }
                                 else if (target.Biota.SpellIsKnown(4687, target.BiotaDatabaseLock)) // if epic already exists upgrade to legendary
                                 {
-                                    AddSpell(player, target, SpellId.CantripBowAptitude4); // adds legendary
+                                    AddSpell(player, target, SpellId.CantripMissileWeaponsAptitude4); // adds legendary
                                     target.DamageMod += 0.04f;
                                     target.Biota.TryRemoveKnownSpell(4687, target.BiotaDatabaseLock); // removes epic
                                     PlayerManager.BroadcastToAll(new GameMessageSystemChat($"[TINKERING] {player.Name} just got super lucky applying Mahogany to their {target.NameWithMaterial}! They have upgraded their Epic Cantrip, it is now Legendary Missile Weapons Aptitude! New Bonus Damage Mod {target.DamageMod:N2}(+4%)", ChatMessageType.Broadcast));
@@ -3518,8 +3482,8 @@ namespace ACE.Server.Managers
             var destroyTargetChance = success ? recipe.SuccessDestroyTargetChance : recipe.FailDestroyTargetChance;
             var destroySourceChance = success ? recipe.SuccessDestroySourceChance : recipe.FailDestroySourceChance;
 
-            var destroyTarget = ThreadSafeRandom.Next(0.0f, 1.0f) <= destroyTargetChance;
-            var destroySource = ThreadSafeRandom.Next(0.0f, 1.0f) <= destroySourceChance;
+            var destroyTarget = ThreadSafeRandom.Next(0.0f, 1.0f) < destroyTargetChance;
+            var destroySource = ThreadSafeRandom.Next(0.0f, 1.0f) < destroySourceChance;
 
             var createItem = success ? recipe.SuccessWCID : recipe.FailWCID;
             var createAmount = success ? recipe.SuccessAmount : recipe.FailAmount;

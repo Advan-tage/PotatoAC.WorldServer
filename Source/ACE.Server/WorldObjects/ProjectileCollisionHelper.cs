@@ -87,6 +87,12 @@ namespace ACE.Server.WorldObjects
 
                             // blood splatter?
                         }
+
+                        if (!(targetCreature is CombatPet))
+                        {
+                            // faction mobs and foetype
+                            sourceCreature.MonsterOnAttackMonster(targetCreature);
+                        }
                     }
                 }
 

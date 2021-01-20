@@ -50,9 +50,22 @@ namespace ACE.Server.WorldObjects
                     Account15Days = true;
             }
 
-            if (EliteTrigger)
+                        if (EliteTrigger)
             {
                 SetProperty(PropertyBool.EliteTrigger, false);
+            }
+            
+            if (PlayerKillerStatus == PlayerKillerStatus.PKLite && !PropertyManager.GetBool("pkl_server").Item)
+            {
+                PlayerKillerStatus = PlayerKillerStatus.NPK;
+
+                var actionChain = new ActionChain();
+                actionChain.AddDelaySeconds(3.0f);
+                actionChain.AddAction(this, () =>
+                {
+                    Session.Network.EnqueueSend(new GameEventWeenieError(Session, WeenieError.YouAreNonPKAgain));
+                });
+                actionChain.EnqueueChain();
             }
 
             // SendSelf will trigger the entrance into portal space
@@ -103,20 +116,18 @@ namespace ACE.Server.WorldObjects
             HandleFreeSkillResetRenewal();
             HandleFreeAttributeResetRenewal();
 
-            if (PlayerKillerStatus == PlayerKillerStatus.PKLite && !PropertyManager.GetBool("pkl_server").Item)
+            HandleDBUpdates();
+
+            if (ServerManager.ShutdownInitiated)
             {
                 var actionChain = new ActionChain();
-                actionChain.AddDelaySeconds(3.0f);
+                actionChain.AddDelaySeconds(10.0f);
                 actionChain.AddAction(this, () =>
                 {
-                    UpdateProperty(this, PropertyInt.PlayerKillerStatus, (int)PlayerKillerStatus.NPK, true);
-
-                    Session.Network.EnqueueSend(new GameEventWeenieError(Session, WeenieError.YouAreNonPKAgain));
+                    SendMessage(ServerManager.ShutdownNoticeText(), ChatMessageType.WorldBroadcast);
                 });
                 actionChain.EnqueueChain();
             }
-
-            HandleDBUpdates();
         }
 
         public void SendTurbineChatChannels(bool breakAllegiance = false)

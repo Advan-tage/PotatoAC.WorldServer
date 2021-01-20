@@ -432,6 +432,9 @@ namespace ACE.Server.WorldObjects
             TooEncumbered = false;
             NotEnoughFreeSlots = false;
 
+            if (worldObjects.Count == 0) // There are no objects to add (e.g. 1 way trade)
+                return true;
+
             if (this is Player player && !player.HasEnoughBurdenToAddToInventory(worldObjects))
             {
                 TooEncumbered = true;
@@ -812,7 +815,7 @@ namespace ACE.Server.WorldObjects
             return 0;
         }
 
-        private void FinishClose(Player player)
+        public virtual void FinishClose(Player player)
         {
             IsOpen = false;
             Viewer = 0;

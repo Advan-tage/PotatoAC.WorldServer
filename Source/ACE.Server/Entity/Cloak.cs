@@ -10,7 +10,10 @@ namespace ACE.Server.Entity
 {
     public class Cloak
     {
-        private static readonly float ChanceMod = 1.0f;
+        /// <summary>
+        /// The maximum frequency of cloak procs, in seconds
+        /// </summary>
+        private static readonly float MinDelay = 5.0f;
 
         /// <summary>
         /// Rolls for a chance at procing a cloak spell
@@ -32,13 +35,19 @@ namespace ACE.Server.Entity
         /// <param name="damage_percent">The percent of MaxHealth inflicted by an enemy's hit</param>
         /// <returns></returns>
         public static bool RollProc(WorldObject cloak, float damage_percent)
-        {
+        {            
             // TODO: find retail formula
             // TODO: cloak level multiplier - Added 6/19/2020 HQ (Still need retail numbers) Updated with Riggs suggestions
 
+            var currentTime = Time.GetUnixTime();
+
+            if (currentTime - cloak.UseTimestamp < MinDelay)
+                return false;
+
+                
             var itemLevel = cloak.ItemLevel ?? 0;
 
-            var maxProcRate = 0.25f + itemLevel * 0.01f;
+            var maxProcRate = 0.25f + (itemLevel - 1) * 0.0125f;
             if (itemLevel < 1)
                 maxProcRate = 0.0f;
 
@@ -53,6 +62,7 @@ namespace ACE.Server.Entity
                 var rng = ThreadSafeRandom.Next(0.0f, 1.0f);
                 if (chance < rng)
                     return false;
+                cloak.UseTimestamp = currentTime;
             }
             return true;
         }
@@ -69,8 +79,13 @@ namespace ACE.Server.Entity
             if (spell.NotFound)
             {
                 if (defender is Player player)
-                    player.Session.Network.EnqueueSend(new GameMessageSystemChat($"{spell.Name} spell not implemented, yet!", ChatMessageType.System));
+                {
+                    if (spell._spellBase == null)
+                        player.Session.Network.EnqueueSend(new GameMessageSystemChat($"SpellId {cloak.ProcSpell} Invalid.", ChatMessageType.System));
+                    else
+                        player.Session.Network.EnqueueSend(new GameMessageSystemChat($"{spell.Name} spell not implemented, yet!", ChatMessageType.System));
 
+                }
                 return false;
             }
 
@@ -110,26 +125,44 @@ namespace ACE.Server.Entity
             get { return (int)PropertyManager.GetLong("cloak-damage-reduction", 200).Item; }
         }
 
+        public static int GetDamageReductionAmount(WorldObject source)
+        {
+            var damageReductionAmount = DamageReductionAmount;
+
+            // https://asheron.fandom.com/wiki/Master_of_Arms
+            // Cloaks with the chance to reduce incoming damage by 200 have been reduced to 100 for PvP circumstances.
+            if (source is Player)
+                damageReductionAmount /= 2;
+
+            return damageReductionAmount;
+        }
+
         /// <summary>
         /// Returns the reduced damage amount when a cloak procs
         /// with PropertyInt.CloakWeaveProc=2
         /// </summary>
-        public static uint GetReducedAmount(uint damage)
+        public static uint GetReducedAmount(WorldObject source, uint damage)
         {
-            if (damage > DamageReductionAmount)
-                return (uint)(damage - DamageReductionAmount);
+            var damageReductionAmount = GetDamageReductionAmount(source);
+
+            if (damage > damageReductionAmount)
+                return (uint)(damage - damageReductionAmount);
             else
                 return 0;
         }
 
-        public static int GetReducedAmount(int damage)
+        public static int GetReducedAmount(WorldObject source, int damage)
         {
-            return Math.Max(0, damage - DamageReductionAmount);
+            var damageReductionAmount = GetDamageReductionAmount(source);
+
+            return Math.Max(0, damage - damageReductionAmount);
         }
 
-        public static float GetReducedAmount(float damage)
+        public static float GetReducedAmount(WorldObject source, float damage)
         {
-            return Math.Max(0, damage - DamageReductionAmount);
+            var damageReductionAmount = GetDamageReductionAmount(source);
+
+            return Math.Max(0, damage - damageReductionAmount);
         }
 
         /// <summary>
