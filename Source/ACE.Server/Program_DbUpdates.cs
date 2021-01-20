@@ -18,6 +18,10 @@ namespace ACE.Server
     {
         private static void CheckForWorldDatabaseUpdate()
         {
+#if DEBUG
+          //  CheckforManualWorldDBUpdate();
+            return;
+#endif
             log.Info($"Automatic World Database Update started...");
             try
             {
@@ -75,6 +79,40 @@ namespace ACE.Server
                 log.Info($"Unable to continue with Automatic World Database Update due to the following error: {ex}");
             }
             log.Info($"Automatic World Database Update complete.");
+        }
+
+        private static void CheckforManualWorldDBUpdate()
+        {
+            var lines = File.ReadAllLines("world-files.txt").Select(x => x.Trim()).Where(x => !String.IsNullOrWhiteSpace(x) && x.EndsWith(".sql")).ToList();
+            var lines2 = lines.ToList();
+            try
+            {
+                var basedir = @"C:\dev\AC\ACE-World-16PY-Patches\";
+                int i = 0;
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("*"))
+                    {
+                        i++;
+                        continue;
+                    }
+                    var file = $"{basedir}{line}";
+                    if (File.Exists(file))
+                        Command.Handlers.Processors.DeveloperContentCommands.ImportSQL(file);
+                    lines2[i] = "*" + lines[i];
+                    i++;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                File.WriteAllLines("world-files.txt", lines2);
+                throw;
+            }
+            finally
+            {
+                File.WriteAllLines("world-files.txt", lines2);
+            }
         }
 
         private static void UpdateToLatestWorldDatabase(string dbURL, string dbFileName)

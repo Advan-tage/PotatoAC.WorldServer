@@ -521,6 +521,9 @@ namespace ACE.Database
                 {
                     var biota = GetBiota(result.ObjectId);
 
+                    if (biota == null)
+                        continue;
+
                     // Filter out objects that are in a container
                     if (biota.BiotaPropertiesIID.FirstOrDefault(r => r.Type == 2 && r.Value != 0) != null)
                         continue;
